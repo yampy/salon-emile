@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { getDb } from "@/db/client";
 import { getModelSetting, MODEL_SETTING_KEYS } from "@/db/settings";
 import { resolveProvider } from "@/llm";
+import { describeAuthSource } from "@/llm/auth";
 import { summarizeUsage } from "@/server/usage";
 import { updateModelSettings } from "./actions";
 
@@ -31,6 +32,12 @@ export default async function SettingsPage() {
           現在のLLMプロバイダ: <span className="text-primary">{provider}</span>
           (環境変数 LLM_PROVIDER で切替。mock はAPIキー不要)
         </p>
+        {provider === "anthropic" && (
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="auth-source">
+            認証方式: <span className="text-primary">{describeAuthSource()}</span>
+            (APIキー / OAuthトークン / ant プロファイルの順で解決)
+          </p>
+        )}
       </div>
 
       <section className="max-w-xl rounded-md border border-border bg-card p-4">

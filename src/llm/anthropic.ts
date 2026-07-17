@@ -6,9 +6,10 @@
  * so the stable prefix is cached across turns; the volatile step block and
  * the conversation follow it uncached.
  */
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
 import { generateObject, streamText, tool, type ModelMessage } from "ai";
 import { z } from "zod";
+import { OAUTH_BETA_HEADER, resolveAnthropicAuth } from "./auth";
 import type {
   ChatStream,
   ChatStreamParams,
@@ -53,11 +54,25 @@ const ADVANCE_STEP_TOOL = tool({
 });
 
 export class AnthropicClient implements LlmClient {
-  private readonly provider = createAnthropic();
+  /**
+   * Resolve credentials per call: API key, or an OAuth bearer token (env or
+   * `ant auth login` profile — short-lived, so never cached in the client).
+   * OAuth requests additionally carry the oauth beta header.
+   */
+  private provider(): AnthropicProvider {
+    const auth = resolveAnthropicAuth();
+    if (auth.kind === "apiKey") {
+      return createAnthropic({ apiKey: auth.apiKey });
+    }
+    return createAnthropic({
+      authToken: auth.authToken,
+      headers: { "anthropic-beta": OAUTH_BETA_HEADER },
+    });
+  }
 
   async chatStream(params: ChatStreamParams): Promise<ChatStream> {
     const result = streamText({
-      model: this.provider(params.model),
+      model: this.provider()(params.model),
       allowSystemInMessages: true,
       messages: [
         ...systemMessages(params.system),
@@ -88,7 +103,7 @@ export class AnthropicClient implements LlmClient {
     params: GenerateObjectParams<T>
   ): Promise<GenerateObjectResult<T>> {
     const result = await generateObject({
-      model: this.provider(params.model),
+      model: this.provider()(params.model),
       allowSystemInMessages: true,
       messages: [
         ...systemMessages(params.system),

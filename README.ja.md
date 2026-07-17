@@ -107,9 +107,14 @@ pnpm dev                                            # http://127.0.0.1:3000
 ```
 
 これだけで動きます — 設定なしなら決定的なモックLLMで動作します。実際の対話には
-APIキーを設定してください:
+次のどちらかで認証してください:
 
 ```bash
+# 方法A — Anthropic CLI の OAuth(キー管理不要):
+brew install anthropics/tap/ant && ant auth login
+# アプリが短命トークンを自動発行・自動更新します
+
+# 方法B — 従来のAPIキー:
 cp .env.example .env    # ANTHROPIC_API_KEY と LLM_PROVIDER=anthropic を設定
 ```
 

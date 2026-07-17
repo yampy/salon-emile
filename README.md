@@ -113,9 +113,14 @@ pnpm dev                                            # http://127.0.0.1:3000
 ```
 
 That's it — with no configuration the app runs on the deterministic mock LLM. For
-real dialogue, add your key:
+real dialogue, authenticate one of two ways:
 
 ```bash
+# Option A — OAuth via the Anthropic CLI (no key to manage):
+brew install anthropics/tap/ant && ant auth login
+# the app then mints and refreshes short-lived tokens automatically
+
+# Option B — classic API key:
 cp .env.example .env    # set ANTHROPIC_API_KEY, LLM_PROVIDER=anthropic
 ```
 

@@ -1,9 +1,11 @@
 /**
  * Provider resolution: `LLM_PROVIDER=mock|anthropic`.
- * When unset, falls back to anthropic if an API key is present, else mock —
- * so a fresh clone works without any configuration.
+ * When unset, falls back to anthropic if any credential is present (API
+ * key, OAuth token, or an `ant auth login` profile), else mock — so a
+ * fresh clone works without any configuration.
  */
 import { AnthropicClient } from "./anthropic";
+import { hasAnthropicCredentials } from "./auth";
 import { MockLlmClient } from "./mock";
 import type { LlmClient } from "./types";
 
@@ -22,7 +24,7 @@ export function resolveProvider(): LlmProvider {
       `invalid LLM_PROVIDER "${configured}" — expected "mock" or "anthropic"`
     );
   }
-  return process.env.ANTHROPIC_API_KEY ? "anthropic" : "mock";
+  return hasAnthropicCredentials() ? "anthropic" : "mock";
 }
 
 const clients = new Map<LlmProvider, LlmClient>();

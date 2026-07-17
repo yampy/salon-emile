@@ -15,3 +15,4 @@ Ambiguities resolved autonomously per CLAUDE.md / GOAL_PROMPT.md. One line each:
 - 2026-07-17: E2E resets its SQLite inside the Playwright webServer command (not globalSetup) — the dev server must never hold a connection to a database file deleted from under it.
 - 2026-07-17: Streamed chat returns plain text; the client refetches lesson state after each exchange — the server stays the single authority on step transitions with no custom wire protocol.
 - 2026-07-17: Repository lives at the repo root created with the canon commit; the working-directory parent (which held stray copies of CLAUDE.md/GOAL_PROMPT.md) is not part of the project.
+- 2026-07-17: OAuth support added alongside API keys — credentials resolve as ANTHROPIC_API_KEY → ANTHROPIC_AUTH_TOKEN → `ant auth login` profile (short-lived tokens minted via `ant auth print-credentials`, cached 5 min); OAuth requests carry the `oauth-2025-04-20` beta header, and exactly one auth mechanism is ever sent.
