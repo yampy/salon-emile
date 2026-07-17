@@ -14,6 +14,7 @@ import {
   real,
   sqliteTable,
   text,
+  unique,
 } from "drizzle-orm/sqlite-core";
 import type { RubricCriterion } from "@/domain/curriculum.schema";
 import type { ExerciseKind } from "@/domain/exercise";
@@ -222,7 +223,29 @@ export const settings = sqliteTable("settings", {
   value: text("value").notNull(),
 });
 
-export type LlmRole = "tutor" | "grader" | "cardGrader" | "variantGenerator";
+export type LlmRole =
+  | "tutor"
+  | "grader"
+  | "cardGrader"
+  | "variantGenerator"
+  | "modelAnswer";
+
+export const modelAnswers = sqliteTable(
+  "model_answers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionN: integer("session_n")
+      .notNull()
+      .references(() => sessions.n),
+    question: text("question").notNull(),
+    problematique: text("problematique").notNull(),
+    these: text("these").notNull(),
+    antithese: text("antithese").notNull(),
+    depassement: text("depassement").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [unique().on(table.sessionN, table.question)]
+);
 
 export const llmUsage = sqliteTable("llm_usage", {
   id: integer("id").primaryKey({ autoIncrement: true }),

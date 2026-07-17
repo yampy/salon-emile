@@ -59,7 +59,7 @@ export type GenerateObjectParams<T> = {
   prompt: string;
   schema: z.ZodType<T>;
   /** Stable identifier the mock uses to dispatch deterministic fixtures. */
-  schemaName: "evaluation" | "cardGrade" | "variant";
+  schemaName: "evaluation" | "cardGrade" | "variant" | "modelAnswer";
 };
 
 export type GenerateObjectResult<T> = {

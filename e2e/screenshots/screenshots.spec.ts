@@ -23,7 +23,7 @@ test("五画面のスクリーンショットを生成する", async ({ page }) 
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
   // --- lesson: open session 0 and exchange a few turns
-  await page.goto("/lessons/0");
+  await page.goto("/lessons/0/dialogue");
   await page.getByTestId("start-lesson").click();
   await expect(page.locator('[data-role="assistant"]').first()).not.toBeEmpty();
   for (const step of ["definition_reperes", "theses"]) {
@@ -35,6 +35,11 @@ test("五画面のスクリーンショットを生成する", async ({ page }) 
     );
   }
   await capture(page, "lesson.png");
+
+  // --- textbook: the reading page for session 1
+  await page.goto("/lessons/1");
+  await expect(page.getByTestId("textbook")).toBeVisible();
+  await capture(page, "textbook.png");
 
   // --- practice: grade an essay so the evaluation is visible
   await page.goto("/practice?session=1&kind=mini_essay");

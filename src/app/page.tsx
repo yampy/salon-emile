@@ -6,8 +6,9 @@
 import Link from "next/link";
 import { RepereConstellation } from "@/components/repere-constellation";
 import { getDb } from "@/db/client";
+import { LESSON_STEPS } from "@/domain/lesson";
 import { listReperes, listSessions } from "@/server/canon";
-import { listCompletedRuns } from "@/server/lesson";
+import { listActiveRuns, listCompletedRuns } from "@/server/lesson";
 import { isSessionMasteryReached } from "@/server/mastery";
 import { reviewedRepereIds } from "@/server/review";
 
@@ -17,6 +18,11 @@ export default async function RoadmapPage() {
   const db = getDb();
   const sessions = listSessions(db);
   const completed = new Set(listCompletedRuns(db).map((r) => r.sessionN));
+  const inProgress = new Map(
+    listActiveRuns(db)
+      .filter((r) => !completed.has(r.sessionN))
+      .map((r) => [r.sessionN, LESSON_STEPS.indexOf(r.step) + 1])
+  );
 
   // Soft gate: session n recommends n+1 when its mastery average clears the
   // threshold (session 0 has no notions — completing it recommends session 1).
@@ -71,6 +77,14 @@ export default async function RoadmapPage() {
                       {recommended.has(session.n) && !completed.has(session.n) && (
                         <span className="rounded-sm bg-accent px-1.5 py-0.5 text-accent-foreground">
                           推奨
+                        </span>
+                      )}
+                      {inProgress.has(session.n) && (
+                        <span
+                          className="rounded-sm border border-primary/40 px-1.5 py-0.5 text-primary"
+                          data-testid={`in-progress-${session.n}`}
+                        >
+                          対話中 {inProgress.get(session.n)}/{LESSON_STEPS.length}
                         </span>
                       )}
                       {completed.has(session.n) && (

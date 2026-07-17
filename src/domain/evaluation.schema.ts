@@ -47,6 +47,19 @@ export const VariantSchema = z.object({
 
 export type Variant = z.infer<typeof VariantSchema>;
 
+/**
+ * Model answer for a canonical question, shown on the textbook page.
+ * Structured as the three-part dissertation so it doubles as a form example.
+ */
+export const ModelAnswerSchema = z.object({
+  problematique: z.string().min(1),
+  these: z.string().min(1),
+  antithese: z.string().min(1),
+  depassement: z.string().min(1),
+});
+
+export type ModelAnswer = z.infer<typeof ModelAnswerSchema>;
+
 /** Mean of the five criterion scores of an evaluation (0–4). */
 export function averageScore(evaluation: Evaluation): number {
   const values = Object.values(evaluation.scores);

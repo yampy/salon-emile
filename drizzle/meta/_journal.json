@@ -15,6 +15,13 @@
       "when": 1784268820732,
       "tag": "0001_tough_invaders",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784286365619,
+      "tag": "0002_mean_taskmaster",
+      "breakpoints": true
     }
   ]
 }

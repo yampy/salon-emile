@@ -25,9 +25,13 @@ drops the *d'*: `salon-emile`.)
 
 ## Features
 
+- **Textbook first** — every session is also a reading: goal, introduction, core
+  argument, repères, canonical theses and questions laid out as a study text, with
+  cached AI model answers in the three-part dissertation form.
 - **Socratic lessons** — 17 sessions, each walking `intuition → definition/repères →
-  theses → question → essay → bridge`. The LLM tutor requests step advances; the
-  server grants them only after substantive learner output.
+  theses → question → essay → bridge`. The tutor requests step advances — and the
+  learner can advance too — but the server grants them only after substantive
+  learner output.
 - **Rubric grading** — essays and exercises scored 0–4 on problematisation,
   concepts, argumentation, culture, expression, with evidence quotes and concrete
   next moves. Structured output only.
@@ -49,13 +53,13 @@ drops the *d'*: `salon-emile`.)
 
 ## Screenshots
 
-| Roadmap | Lesson | Practice |
+| Roadmap | Textbook | Lesson |
 | --- | --- | --- |
-| ![Roadmap](./docs/screenshots/roadmap.png) | ![Lesson](./docs/screenshots/lesson.png) | ![Practice](./docs/screenshots/practice.png) |
+| ![Roadmap](./docs/screenshots/roadmap.png) | ![Textbook](./docs/screenshots/textbook.png) | ![Lesson](./docs/screenshots/lesson.png) |
 
-| Review | Dashboard |
-| --- | --- |
-| ![Review](./docs/screenshots/review.png) | ![Dashboard](./docs/screenshots/dashboard.png) |
+| Practice | Review | Dashboard |
+| --- | --- | --- |
+| ![Practice](./docs/screenshots/practice.png) | ![Review](./docs/screenshots/review.png) | ![Dashboard](./docs/screenshots/dashboard.png) |
 
 Regenerate anytime with `pnpm screenshots`.
 

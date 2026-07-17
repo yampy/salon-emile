@@ -22,9 +22,12 @@ FSRS間隔反復で定着させます。哲学教育 × 学習科学 × LLM を�
 
 ## 機能
 
+- **教科書ファースト** — 各回はまず読み物: 到達目標・導入・核心・repères・正典
+  テーゼ・問いを学習テキストとして配置し、問いごとに三部構成の解答例(AI生成・
+  キャッシュ)を読める。
 - **ソクラテス式レッスン** — 全17回。各回は「直観 → 定義とrepères → テーゼ →
-  問い → 論述 → 橋渡し」を歩む。チューターLLMはステップ前進を「要求」できるだけで、
-  実質的な産出があったかをサーバが判定して初めて進む。
+  問い → 論述 → 橋渡し」を歩む。前進はチューターの要求でも学習者自身のボタンでも
+  よいが、実質的な産出があったかをサーバが判定して初めて進む。
 - **ルーブリック採点** — 問題化・概念・論証・教養・表現の5観点を各0〜4で採点。
   根拠の引用と「次の一手」つき。出力は構造化データのみ。
 - **演習6形式** — 二直観抽出・repère適用・一文論述・problématique構築・
@@ -43,13 +46,13 @@ FSRS間隔反復で定着させます。哲学教育 × 学習科学 × LLM を�
 
 ## スクリーンショット
 
-| ロードマップ | レッスン | 演習 |
+| ロードマップ | 教科書 | レッスン |
 | --- | --- | --- |
-| ![ロードマップ](./docs/screenshots/roadmap.png) | ![レッスン](./docs/screenshots/lesson.png) | ![演習](./docs/screenshots/practice.png) |
+| ![ロードマップ](./docs/screenshots/roadmap.png) | ![教科書](./docs/screenshots/textbook.png) | ![レッスン](./docs/screenshots/lesson.png) |
 
-| 復習 | ダッシュボード |
-| --- | --- |
-| ![復習](./docs/screenshots/review.png) | ![ダッシュボード](./docs/screenshots/dashboard.png) |
+| 演習 | 復習 | ダッシュボード |
+| --- | --- | --- |
+| ![演習](./docs/screenshots/practice.png) | ![復習](./docs/screenshots/review.png) | ![ダッシュボード](./docs/screenshots/dashboard.png) |
 
 `pnpm screenshots` でいつでも再生成できます。
 

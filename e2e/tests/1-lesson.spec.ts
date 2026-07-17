@@ -1,6 +1,7 @@
 /**
- * E2E scenario 1: the session-0 lesson runs end to end — the tutor opens,
- * substantive answers advance every step, and the lesson completes.
+ * E2E scenario 1: the session-0 lesson runs end to end — textbook → dialogue,
+ * progress visible on the roadmap, manual advance gated by production, and
+ * substantive answers advance every step to completion.
  */
 import { expect, test } from "@playwright/test";
 
@@ -16,8 +17,11 @@ const STEPS_AFTER_INTUITION = [
 ] as const;
 
 test("第0回レッスンが通しで完了する", async ({ page }) => {
+  // the textbook is the entry; dialogue is one click deeper
   await page.goto("/lessons/0");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("第0回");
+  await expect(page.getByTestId("textbook")).toBeVisible();
+  await page.getByTestId("to-dialogue").first().click();
+  await expect(page).toHaveURL(/\/lessons\/0\/dialogue/);
 
   await page.getByTestId("start-lesson").click();
   await expect(page.locator('[data-role="assistant"]').first()).not.toBeEmpty();
@@ -25,6 +29,16 @@ test("第0回レッスンが通しで完了する", async ({ page }) => {
     "data-current-step",
     "intuition"
   );
+  await expect(page.getByTestId("step-goal")).toBeVisible();
+
+  // manual advance is refused while the step has no learner production
+  await page.getByTestId("advance-step").click();
+  await expect(page.getByTestId("advance-note")).toContainText("1文以上");
+
+  // an in-progress lesson is visible on the roadmap
+  await page.goto("/");
+  await expect(page.getByTestId("in-progress-0")).toBeVisible();
+  await page.goto("/lessons/0/dialogue");
 
   for (const step of STEPS_AFTER_INTUITION) {
     await page.getByTestId("chat-input").fill(SUBSTANTIVE);

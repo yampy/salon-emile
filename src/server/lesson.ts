@@ -64,6 +64,15 @@ export function listCompletedRuns(db: Db): LessonRun[] {
     .all();
 }
 
+/** All in-progress runs (roadmap shows 対話中 with their step). */
+export function listActiveRuns(db: Db): LessonRun[] {
+  return db
+    .select()
+    .from(lessonRuns)
+    .where(eq(lessonRuns.status, "active"))
+    .all();
+}
+
 /** Dialogue history of a run, oldest first. */
 export function listRunMessages(db: Db, runId: number): LessonMessage[] {
   return db

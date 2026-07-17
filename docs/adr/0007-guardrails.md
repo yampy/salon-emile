@@ -32,3 +32,18 @@ Three guardrails, each enforced in more than one layer:
 - Looking things up is legitimate (it's canon text), visible (logged and
   displayed), and immediately turned back into practice.
 - Hallucinated philosophy cannot enter the learner's notes through the UI.
+
+## Amendment (2026-07-17): textbook pages read friction-free
+
+Learner feedback: the dialogue-only entry point made study feel like an
+endless interrogation, and there was no way to *read first*. Each session
+now has a textbook page (all canon sections plus AI-generated model answers
+in the three-part dissertation form, cached per question). Reading there —
+including model answers — is intentionally **outside** guardrail 2: no
+reveal event, no forced variant. The reveal cost applies where answers can
+substitute for one's own attempt (practice and dialogue); a textbook one
+chose to study from is negative education's "arranged experience", not its
+enemy. Guardrail 3 still applies to model answers: philosopher references
+are constrained to canon theses cited by ID. The lesson state machine's
+production gate (guardrail via ADR 0003) also gained a learner-initiated
+advance button — same server-side judgment, more learner control over pace.

@@ -150,6 +150,17 @@ export class MockLlmClient implements LlmClient {
           question: `【変形${priorCount + 1}】「${question}」と同じ緊張を、別の具体例に即して定式化せよ。`,
         };
       }
+      case "modelAnswer": {
+        const question = extractTag(prompt, "question");
+        return {
+          problematique: `「${question}」は、両立しがたい二つの直観の緊張として定式化できる。`,
+          these: "第一の立場を最強の形で擁護する。直観Aには確かな根拠がある。",
+          antithese:
+            "しかしテーゼ自身の前提に内在的な限界がある。外部からの反論ではなく、その前提を掘り下げる。",
+          depassement:
+            "ゆえに問いの前提そのものを再検討し、問いを再定式化することで緊張を乗り越える。",
+        };
+      }
     }
   }
 }
