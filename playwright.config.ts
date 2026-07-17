@@ -15,11 +15,14 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
-  timeout: 90_000,
-  expect: { timeout: 15_000 },
+  timeout: 120_000,
+  // Generous expect timeout: the dev server compiles routes on demand, and
+  // the very first run on a fresh clone has a cold compiler cache.
+  expect: { timeout: 30_000 },
   reporter: [["list"]],
   use: {
     baseURL: "http://127.0.0.1:3100",
+    navigationTimeout: 30_000,
     trace: "retain-on-failure",
   },
   webServer: {
