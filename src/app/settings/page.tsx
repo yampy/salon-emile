@@ -38,6 +38,12 @@ export default async function SettingsPage() {
             (APIキー / OAuthトークン / ant プロファイルの順で解決)
           </p>
         )}
+        {provider === "claude-code" && (
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="auth-source">
+            認証方式: <span className="text-primary">Claude Code のログイン(サブスクリプション)</span>
+            — 利用量は Pro/Max プランの上限から消費されます
+          </p>
+        )}
       </div>
 
       <section className="max-w-xl rounded-md border border-border bg-card p-4">

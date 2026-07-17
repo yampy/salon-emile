@@ -113,14 +113,17 @@ pnpm dev                                            # http://127.0.0.1:3000
 ```
 
 That's it — with no configuration the app runs on the deterministic mock LLM. For
-real dialogue, authenticate one of two ways:
+real dialogue, pick one:
 
 ```bash
-# Option A — OAuth via the Anthropic CLI (no key to manage):
-brew install anthropics/tap/ant && ant auth login
-# the app then mints and refreshes short-lived tokens automatically
+# Option A — your Claude Pro/Max subscription (via Claude Code's login):
+#   requires Claude Code installed and logged in on this machine
+echo "LLM_PROVIDER=claude-code" > .env
 
-# Option B — classic API key:
+# Option B — Anthropic API with OAuth (billed as API usage):
+brew install anthropics/tap/ant && ant auth login
+
+# Option C — Anthropic API with a classic key:
 cp .env.example .env    # set ANTHROPIC_API_KEY, LLM_PROVIDER=anthropic
 ```
 

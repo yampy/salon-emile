@@ -107,14 +107,17 @@ pnpm dev                                            # http://127.0.0.1:3000
 ```
 
 これだけで動きます — 設定なしなら決定的なモックLLMで動作します。実際の対話には
-次のどちらかで認証してください:
+次のいずれかで認証してください:
 
 ```bash
-# 方法A — Anthropic CLI の OAuth(キー管理不要):
-brew install anthropics/tap/ant && ant auth login
-# アプリが短命トークンを自動発行・自動更新します
+# 方法A — Claude Pro/Max サブスクリプション(Claude Code のログインを共有):
+#   このマシンに Claude Code がインストール・ログイン済みであること
+echo "LLM_PROVIDER=claude-code" > .env
 
-# 方法B — 従来のAPIキー:
+# 方法B — Anthropic API の OAuth(API利用として課金):
+brew install anthropics/tap/ant && ant auth login
+
+# 方法C — 従来のAPIキー:
 cp .env.example .env    # ANTHROPIC_API_KEY と LLM_PROVIDER=anthropic を設定
 ```
 
