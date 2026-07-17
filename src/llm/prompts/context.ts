@@ -3,6 +3,7 @@
  * rendering helpers. All teaching content flows in from the DB (seeded from
  * curriculum.json) — prompt modules only add instructional framing.
  */
+import type { RubricCriterion } from "@/domain/curriculum.schema";
 import type { LessonStep } from "@/domain/lesson";
 
 export type SessionPlan = {
@@ -34,7 +35,7 @@ export type RepereRef = {
 };
 
 export type RubricRef = {
-  id: string;
+  id: RubricCriterion;
   name: string;
   focus: string;
 };

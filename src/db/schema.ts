@@ -16,6 +16,7 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 import type { RubricCriterion } from "@/domain/curriculum.schema";
+import type { ExerciseKind } from "@/domain/exercise";
 import type { LessonStep } from "@/domain/lesson";
 
 const createdAt = () =>
@@ -121,14 +122,6 @@ export const messages = sqliteTable("messages", {
   content: text("content").notNull(),
   createdAt: createdAt(),
 });
-
-export type ExerciseKind =
-  | "intuitions"
-  | "repere_application"
-  | "one_sentence"
-  | "problematique"
-  | "plan"
-  | "mini_essay";
 
 export type AttemptKind = "exercise" | "essay" | "reveal" | "variant";
 
