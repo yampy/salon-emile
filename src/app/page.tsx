@@ -1,16 +1,16 @@
 /**
- * Roadmap screen — the 17-session journey in three parts plus the repères
- * constellation. The mastery gate is soft: reaching it only marks the next
+ * Roadmap screen — the 17-session journey in three parts with plain
+ * progress bars. The mastery gate is soft: reaching it only marks the next
  * session as recommended; nothing is ever locked.
  */
 import Link from "next/link";
-import { RepereConstellation } from "@/components/repere-constellation";
+import { ProgressOverview } from "@/components/progress-overview";
 import { getDb } from "@/db/client";
 import { LESSON_STEPS } from "@/domain/lesson";
-import { listReperes, listSessions } from "@/server/canon";
+import { listSessions } from "@/server/canon";
 import { listActiveRuns, listCompletedRuns } from "@/server/lesson";
 import { isSessionMasteryReached } from "@/server/mastery";
-import { reviewedRepereIds } from "@/server/review";
+import { reviewedCountsByKind } from "@/server/review";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export default async function RoadmapPage() {
   const db = getDb();
   const sessions = listSessions(db);
   const completed = new Set(listCompletedRuns(db).map((r) => r.sessionN));
+  const cardProgress = reviewedCountsByKind(db);
   const inProgress = new Map(
     listActiveRuns(db)
       .filter((r) => !completed.has(r.sessionN))
@@ -53,9 +54,20 @@ export default async function RoadmapPage() {
         </p>
       </div>
 
-      <RepereConstellation
-        reperes={listReperes(db)}
-        reviewedIds={reviewedRepereIds(db)}
+      <ProgressOverview
+        items={[
+          { label: "レッスン完了", done: completed.size, total: sessions.length },
+          {
+            label: "repères 復習済み",
+            done: cardProgress.repere.reviewed,
+            total: cardProgress.repere.total,
+          },
+          {
+            label: "テーゼ 復習済み",
+            done: cardProgress.thesis.reviewed,
+            total: cardProgress.thesis.total,
+          },
+        ]}
       />
 
       {[...phases.entries()].map(([phase, group]) => (

@@ -227,17 +227,21 @@ export function reviewedCardStats(db: Db): { total: number; reviewed: number } {
   };
 }
 
-/** Repere ids that have been reviewed at least once (constellation fill). */
-export function reviewedRepereIds(db: Db): Set<string> {
-  return new Set(
-    db
-      .select()
-      .from(cards)
-      .where(eq(cards.kind, "repere"))
-      .all()
-      .filter((c) => c.reps > 0)
-      .map((c) => c.sourceId)
-  );
+export type KindProgress = { reviewed: number; total: number };
+
+/** Reviewed-at-least-once counts per canon card kind (roadmap progress). */
+export function reviewedCountsByKind(
+  db: Db
+): Record<"repere" | "thesis", KindProgress> {
+  const rows = db.select({ kind: cards.kind, reps: cards.reps }).from(cards).all();
+  const tally = (kind: "repere" | "thesis"): KindProgress => {
+    const ofKind = rows.filter((r) => r.kind === kind);
+    return {
+      reviewed: ofKind.filter((r) => r.reps > 0).length,
+      total: ofKind.length,
+    };
+  };
+  return { repere: tally("repere"), thesis: tally("thesis") };
 }
 
 /** A fresh FSRS state for external callers needing card creation. */

@@ -37,7 +37,7 @@ export function listNotions(db: Db) {
   return db.select().from(notions).orderBy(asc(notions.session)).all();
 }
 
-/** All reperes (for the roadmap constellation and review cards). */
+/** All reperes (for review cards and session plans). */
 export function listReperes(db: Db) {
   return db.select().from(reperes).all();
 }

@@ -64,8 +64,8 @@ test("五画面のスクリーンショットを生成する", async ({ page }) 
   await expect(page.getByTestId("mastery-radar")).toBeVisible();
   await capture(page, "dashboard.png");
 
-  // --- roadmap: constellation partially lit, recommendation visible
+  // --- roadmap: progress bars and in-progress badges visible
   await page.goto("/");
-  await expect(page.getByTestId("repere-constellation")).toBeVisible();
+  await expect(page.getByTestId("progress-overview")).toBeVisible();
   await capture(page, "roadmap.png");
 });
