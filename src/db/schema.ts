@@ -228,7 +228,20 @@ export type LlmRole =
   | "grader"
   | "cardGrader"
   | "variantGenerator"
-  | "modelAnswer";
+  | "modelAnswer"
+  | "reading";
+
+export const sessionReadings = sqliteTable("session_readings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  sessionN: integer("session_n")
+    .notNull()
+    .unique()
+    .references(() => sessions.n),
+  content: text("content", { mode: "json" })
+    .$type<import("@/domain/reading.schema").SessionReading>()
+    .notNull(),
+  createdAt: createdAt(),
+});
 
 export const modelAnswers = sqliteTable(
   "model_answers",

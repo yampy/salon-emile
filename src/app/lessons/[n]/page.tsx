@@ -1,12 +1,12 @@
 /**
- * Textbook screen — the session as a reading: every canon section laid out
- * for study first (goal, introduction, core, method, repères, theses,
- * questions with model answers), with the dialogue lesson and exercises as
- * onward paths.
+ * Textbook screen — the session as a reading. The friendly generated 読み物
+ * (5E structure, cached) carries the narrative; the canonical questions
+ * follow with model answers; the raw canon stays available as reference.
  */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ModelAnswerToggle } from "@/components/model-answer-toggle";
+import { SessionReadingView } from "@/components/session-reading";
 import { buttonVariants } from "@/components/ui/button";
 import { getDb } from "@/db/client";
 import { LESSON_STEPS } from "@/domain/lesson";
@@ -14,26 +14,6 @@ import { getSessionPlan } from "@/server/canon";
 import { getLatestRun } from "@/server/lesson";
 
 export const dynamic = "force-dynamic";
-
-function Section({
-  title,
-  fr,
-  children,
-}: {
-  title: string;
-  fr?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="border-t border-border pt-5">
-      <h2 className="mb-2 text-lg font-semibold">
-        {title}
-        {fr && <span className="ml-2 text-sm font-normal italic text-muted-foreground">{fr}</span>}
-      </h2>
-      {children}
-    </section>
-  );
-}
 
 export default async function TextbookPage({
   params,
@@ -98,72 +78,49 @@ export default async function TextbookPage({
           第{session.n}回 {session.title}
         </h1>
         <p className="italic text-muted-foreground">{session.fr}</p>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          {session.goal}
+        </p>
       </div>
 
       {dialogueCta}
 
-      <div className="flex max-w-3xl flex-col gap-6" data-testid="textbook">
-        <Section title="この回の到達目標">
-          <p className="leading-loose">{session.goal}</p>
-        </Section>
+      <div className="max-w-3xl" data-testid="textbook">
+        <SessionReadingView sessionN={sessionN} theses={plan.theses} />
 
-        <Section title="導入" fr="introduction">
-          <p className="leading-loose">{session.intro}</p>
-        </Section>
-
-        {session.core && (
-          <Section title="核心" fr="le cœur">
-            <p className="leading-loose">{session.core}</p>
-          </Section>
-        )}
-
-        {session.method && (
-          <Section title="方法" fr="la méthode">
-            <p className="leading-loose">{session.method}</p>
-          </Section>
-        )}
-
-        {(session.reperesNote || plan.reperes.length > 0) && (
-          <Section title="repères(概念対)">
+        {plan.reperes.length > 0 && (
+          <section className="mt-8 border-t border-border pt-5">
+            <h2 className="mb-2 text-lg font-semibold">
+              repères(概念対)
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                この回で使う道具
+              </span>
+            </h2>
             {session.reperesNote && (
-              <p className="leading-loose">{session.reperesNote}</p>
+              <p className="text-sm leading-loose">{session.reperesNote}</p>
             )}
-            {plan.reperes.length > 0 && (
-              <ul className="mt-2 flex flex-wrap gap-2 text-sm">
-                {plan.reperes.map((r) => (
-                  <li
-                    key={r.id}
-                    className="rounded-sm border border-border bg-card px-2 py-1"
-                  >
-                    <span className="italic">{r.fr}</span>
-                    <span className="text-muted-foreground"> — {r.ja}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Section>
-        )}
-
-        {plan.theses.length > 0 && (
-          <Section title="正典テーゼ" fr="les thèses">
-            <ul className="flex flex-col gap-3">
-              {plan.theses.map((t) => (
-                <li key={t.id} className="rounded-md border border-border bg-card p-3">
-                  <p className="text-sm font-semibold">
-                    {t.philosopher}
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      [{t.id}]
-                    </span>
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed">{t.claim}</p>
+            <ul className="mt-2 flex flex-wrap gap-2 text-sm">
+              {plan.reperes.map((r) => (
+                <li
+                  key={r.id}
+                  className="rounded-sm border border-border bg-card px-2 py-1"
+                >
+                  <span className="italic">{r.fr}</span>
+                  <span className="text-muted-foreground"> — {r.ja}</span>
                 </li>
               ))}
             </ul>
-          </Section>
+          </section>
         )}
 
         {questions.length > 0 && (
-          <Section title="問い" fr="les questions">
+          <section className="mt-8 border-t border-border pt-5">
+            <h2 className="mb-2 text-lg font-semibold">
+              問い
+              <span className="ml-2 text-sm font-normal italic text-muted-foreground">
+                les questions
+              </span>
+            </h2>
             <ol className="flex flex-col gap-4">
               {questions.map((q) => (
                 <li key={q} className="rounded-md border border-border bg-card p-4">
@@ -175,15 +132,12 @@ export default async function TextbookPage({
             <p className="mt-2 text-xs text-muted-foreground">
               解答例は形式の手本です。まず自分で書いてから読むほうが力になります(演習では採点つきで試せます)。
             </p>
-          </Section>
+          </section>
         )}
 
-        <Section title="学びの視点" fr="notes">
-          <p className="leading-loose">{session.notes}</p>
-        </Section>
-
         {session.bridge && (
-          <Section title="次回への橋渡し" fr="le pont">
+          <section className="mt-8 border-t border-border pt-5">
+            <h2 className="mb-2 text-lg font-semibold">次回への橋渡し</h2>
             <p className="leading-loose">{session.bridge}</p>
             {hasNext && (
               <p className="mt-2 text-sm">
@@ -195,8 +149,59 @@ export default async function TextbookPage({
                 </Link>
               </p>
             )}
-          </Section>
+          </section>
         )}
+
+        <details className="mt-8 rounded-md border border-border bg-card p-4" data-testid="canon-source">
+          <summary className="cursor-pointer text-sm font-semibold hover:text-primary">
+            原典資料(教師用指導案・curriculum.json)を読む
+          </summary>
+          <div className="mt-3 flex flex-col gap-4 text-sm leading-loose">
+            <div>
+              <h3 className="font-semibold">到達目標</h3>
+              <p>{session.goal}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">導入</h3>
+              <p>{session.intro}</p>
+            </div>
+            {session.core && (
+              <div>
+                <h3 className="font-semibold">核心</h3>
+                <p>{session.core}</p>
+              </div>
+            )}
+            {session.method && (
+              <div>
+                <h3 className="font-semibold">方法</h3>
+                <p>{session.method}</p>
+              </div>
+            )}
+            {session.exercise && (
+              <div>
+                <h3 className="font-semibold">演習(正典)</h3>
+                <p>{session.exercise}</p>
+              </div>
+            )}
+            {plan.theses.length > 0 && (
+              <div>
+                <h3 className="font-semibold">正典テーゼ</h3>
+                <ul className="mt-1 flex flex-col gap-2">
+                  {plan.theses.map((t) => (
+                    <li key={t.id}>
+                      <span className="text-xs text-muted-foreground">[{t.id}]</span>{" "}
+                      <span className="font-medium">{t.philosopher}</span>: {t.claim}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold">学びの視点</h3>
+              <p>{session.notes}</p>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div className="border-t border-border pt-5">{dialogueCta}</div>

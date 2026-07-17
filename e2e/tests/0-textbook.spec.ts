@@ -1,22 +1,25 @@
 /**
- * E2E: the textbook page — canon sections readable, model answer generated
- * on demand (mock), dialogue reachable from it.
+ * E2E: the textbook page — the friendly reading (5E structure) renders,
+ * canon stays reachable as reference, model answers open on demand, and
+ * the dialogue is one click away.
  */
 import { expect, test } from "@playwright/test";
 
-test("教科書ページで全体を読み、解答例を開ける", async ({ page }) => {
+test("教科書ページで読み物を読み、解答例を開ける", async ({ page }) => {
   await page.goto("/lessons/1");
   await expect(page.getByTestId("textbook")).toBeVisible();
 
-  // canon sections are rendered as a reading (ASCII/JP substrings only —
-  // accented words differ in Unicode normalization between files)
-  for (const heading of ["この回の到達目標", "導入", "概念対", "正典テーゼ", "問い", "学びの視点"]) {
-    await expect(
-      page.getByRole("heading", { name: new RegExp(heading) })
-    ).toBeVisible();
-  }
-  // theses carry their canon ids
-  await expect(page.getByText("[s1-t1]")).toBeVisible();
+  // the generated reading: hook, 3+ steps with examples, theses guide, recap
+  await expect(page.getByTestId("reading")).toBeVisible();
+  await expect(page.getByTestId("reading-hook")).toBeVisible();
+  expect(await page.getByTestId("reading-step").count()).toBeGreaterThanOrEqual(3);
+  await expect(page.getByTestId("reading-step").first()).toContainText("たとえば");
+  await expect(page.getByTestId("reading-thesis").first()).toContainText("[s1-t");
+  await expect(page.getByTestId("reading-recap")).toBeVisible();
+
+  // the raw canon remains available as reference
+  await page.getByTestId("canon-source").locator("summary").click();
+  await expect(page.getByTestId("canon-source")).toContainText("[s1-t1]");
 
   // model answer: generated on first open, three-part form
   await page.getByTestId("model-answer-toggle").first().click();

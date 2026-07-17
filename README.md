@@ -25,9 +25,12 @@ drops the *d'*: `salon-emile`.)
 
 ## Features
 
-- **Textbook first** — every session is also a reading: goal, introduction, core
-  argument, repères, canonical theses and questions laid out as a study text, with
-  cached AI model answers in the three-part dissertation form.
+- **Textbook first** — every session opens as a friendly reading generated from
+  the canon: a hook, 3–6 understanding steps with everyday examples, canonical
+  theses broken down one by one, and a recap — structured on the 5E instructional
+  model with ARCS motivation and Mayer's personalization principle (see
+  [docs/writing-guide.md](./docs/writing-guide.md)), plus cached AI model answers
+  in the three-part dissertation form. The raw canon stays one accordion away.
 - **Socratic lessons** — 17 sessions, each walking `intuition → definition/repères →
   theses → question → essay → bridge`. The tutor requests step advances — and the
   learner can advance too — but the server grants them only after substantive

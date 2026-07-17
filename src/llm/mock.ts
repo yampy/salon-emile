@@ -88,13 +88,15 @@ export class MockLlmClient implements LlmClient {
   async generateObject<T>(
     params: GenerateObjectParams<T>
   ): Promise<GenerateObjectResult<T>> {
-    const raw = this.fixtureFor(params.schemaName, params.prompt);
+    const systemText = params.system.map((b) => b.text).join("\n");
+    const raw = this.fixtureFor(params.schemaName, params.prompt, systemText);
     return { object: params.schema.parse(raw), usage: MOCK_USAGE };
   }
 
   private fixtureFor(
     schemaName: GenerateObjectParams<unknown>["schemaName"],
-    prompt: string
+    prompt: string,
+    systemText: string
   ): unknown {
     switch (schemaName) {
       case "evaluation": {
@@ -148,6 +150,39 @@ export class MockLlmClient implements LlmClient {
         const priorCount = (prompt.match(/<previous>/g) ?? []).length;
         return {
           question: `【変形${priorCount + 1}】「${question}」と同じ緊張を、別の具体例に即して定式化せよ。`,
+        };
+      }
+      case "reading": {
+        // Thesis ids live in the injected session plan (system blocks).
+        const thesisIds = [
+          ...`${systemText}\n${prompt}`.matchAll(/\[(s\d+-t\d+)\]/g),
+        ].map((m) => m[1]);
+        const uniqueIds = [...new Set(thesisIds)];
+        return {
+          catchphrase: "あたりまえを、問いに変える回。",
+          hook: "あなたにも「考えれば考えるほど分からなくなった」経験はありませんか。この回では、その分からなさこそが哲学の入口であることを確かめます。",
+          steps: [
+            {
+              title: "まず、直観で答えてみる",
+              body: "難しく考える前に、いまの自分の感覚で答えてみましょう。哲学は正解当てではなく、直観を言葉にするところから始まります。",
+              example: "部活の練習がきつい日、「なんのためにやってるんだろう」とふと思う。あの瞬間があなたの直観です。",
+            },
+            {
+              title: "逆の直観も、実はある",
+              body: "最初の答えの逆を考えてみると、そちらにも理があることに気づきます。両方に理があるとき、そこに問いが生まれます。",
+              example: "SNSをやめたいのにやめられない。自由の妨げにも、つながりの条件にも見える——どちらも本当です。",
+            },
+            {
+              title: "緊張を一文にする",
+              body: "対立する二つの直観を一つの文に束ねたものが問題化(problématisation)です。これができれば、論述の骨格は完成しています。",
+              example: "試合で「勝ちたい」と「楽しみたい」がぶつかるとき、その緊張を言葉にできる選手は強い。",
+            },
+          ],
+          thesesGuide: uniqueIds.map((id) => ({
+            id,
+            friendly: `このテーゼ [${id}] は、要するに問いの一方の直観を最も強い形で言い切ったものです。`,
+          })),
+          recap: "直観には必ず逆の直観がある。\n両方に理があるとき、問いが生まれる。\nこれであなたは、意見の対立を「問い」に変えられる。",
         };
       }
       case "modelAnswer": {

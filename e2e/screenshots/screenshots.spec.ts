@@ -38,7 +38,7 @@ test("五画面のスクリーンショットを生成する", async ({ page }) 
 
   // --- textbook: the reading page for session 1
   await page.goto("/lessons/1");
-  await expect(page.getByTestId("textbook")).toBeVisible();
+  await expect(page.getByTestId("reading")).toBeVisible();
   await capture(page, "textbook.png");
 
   // --- practice: grade an essay so the evaluation is visible
