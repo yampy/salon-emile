@@ -12,7 +12,7 @@ GOAL_PROMPT.md §2 のチェックリスト(常に最新化)。
 - [x] `LICENSE`(MIT)、`.env.example`、`.gitignore`(`data/`・`.env`・`*.sqlite` を含む)
 - [x] GitHub Actions CI(`.github/workflows/ci.yml`): lint / typecheck / test / build / e2e(mock)
 - [x] `docs/screenshots/` に主要5画面(`pnpm screenshots` で自動生成)
-- [ ] 秘密情報の混入ゼロ(最終パスで全コミット走査)。`/tmp` へのfresh cloneでREADMEのQuickstart手順のみから起動・テストが再現する
+- [x] 秘密情報の混入ゼロ(全コミット走査済み: キー・秘密鍵・トークンなし、`data/`・`.env`・`*.sqlite` は未追跡)。`/tmp` へのfresh cloneでREADMEのQuickstart手順のみから install / db:migrate+seed+verify / typecheck / lint / test / e2e / build がすべて再現・全green
 
 ## マイルストーン
 
