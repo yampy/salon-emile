@@ -208,6 +208,8 @@ export const reviewLogs = sqliteTable("review_logs", {
   cardId: text("card_id")
     .notNull()
     .references(() => cards.id),
+  /** What was asked (for lapse cards: the variant shown this round). */
+  prompt: text("prompt").notNull(),
   answer: text("answer").notNull(),
   score: real("score").notNull(),
   comment: text("comment").notNull(),
