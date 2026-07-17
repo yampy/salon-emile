@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
-import { Noto_Serif_JP } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
-
-const notoSerifJp = Noto_Serif_JP({
-  variable: "--font-noto-serif-jp",
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Le Salon d'Émile — エミールのサロン",
@@ -30,11 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${notoSerifJp.variable} h-full antialiased`}>
+    <html lang="ja" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <header className="border-b border-border">
           <div className="mx-auto flex max-w-5xl items-baseline justify-between gap-6 px-6 py-4">
-            <Link href="/" className="shrink-0 text-xl tracking-wide">
+            {/* The logotype keeps its serif identity; the body is sans. */}
+            <Link href="/" className="shrink-0 font-serif text-xl tracking-wide">
               Le Salon d&rsquo;<em className="italic font-semibold">Émile</em>
             </Link>
             <nav className="flex flex-wrap gap-x-5 gap-y-1 text-sm">

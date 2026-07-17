@@ -158,7 +158,8 @@ Seven ADRs document the load-bearing decisions —
 [the negative-education guardrails](./docs/adr/0007-guardrails.md).
 
 The visual language is "paper and ink": warm white, sumi ink, a single ultramarine
-accent, serif body text (Noto Serif JP) — and deliberately no confetti.
+accent, system sans-serif body text (the serif italic survives only in the
+logotype's *Émile*) — and deliberately no confetti.
 
 ## License
 

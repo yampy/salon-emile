@@ -41,7 +41,7 @@ pnpm db:migrate / db:seed / db:verify
 - Conventional Commits。小さくコミット。
 - 公開関数・モジュール先頭にJSDoc。モジュール境界を尊重(ui / server / db / llm / domain)。
 - `any` 禁止。エラーは握りつぶさない。
-- ビジュアルは「紙とインク」: 温白/墨+群青1色、本文セリフ体(Noto Serif JP)、紙吹雪等のゲーミフィケーション演出禁止。
+- ビジュアルは「紙とインク」: 温白/墨+群青1色、本文サンセリフ体(システムフォント: Helvetica・Hiragino Sans・Meiryo系)、ロゴタイプの Émile のみセリフ・イタリック、紙吹雪等のゲーミフィケーション演出禁止。
 
 ## 判断の記録
 
