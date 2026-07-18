@@ -42,10 +42,25 @@ export type CardGrade = z.infer<typeof CardGradeSchema>;
 
 /** Isomorphic variant question produced by the variantGenerator role. */
 export const VariantSchema = z.object({
-  question: z.string().min(1),
+  question: z
+    .string()
+    .min(1)
+    .describe(
+      "変形問題の問い。一文の問いのみ。分析・理由・JSON構造・メタ情報を含めない。"
+    ),
 });
 
 export type Variant = z.infer<typeof VariantSchema>;
+
+/** AI worked answer for one exercise statement (the「AIに回答させる」button). */
+export const AiAnswerSchema = z.object({
+  answer: z
+    .string()
+    .min(1)
+    .describe("演習の指示に沿った回答例の本文のみ。前置きやメタ情報を含めない。"),
+});
+
+export type AiAnswer = z.infer<typeof AiAnswerSchema>;
 
 /**
  * Model answer for a canonical question, shown on the textbook page.

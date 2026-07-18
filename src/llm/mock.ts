@@ -155,6 +155,12 @@ export class MockLlmClient implements LlmClient {
           recap: "直観には必ず逆の直観がある。\n両方に理があるとき、問いが生まれる。\nこれであなたは、意見の対立を「問い」に変えられる。",
         };
       }
+      case "aiAnswer": {
+        const exercise = extractTag(prompt, "exercise");
+        return {
+          answer: `たとえばこう考えられます — ${exercise.slice(0, 24)}…に対して、直観A(肯定)と直観B(否定)をそれぞれ一文で立て、両方に理がある緊張として結びます。`,
+        };
+      }
       case "modelAnswer": {
         const question = extractTag(prompt, "question");
         return {

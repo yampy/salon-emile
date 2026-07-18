@@ -98,8 +98,8 @@ describe("POST /api/attempts", () => {
   });
 });
 
-describe("POST /api/reveal", () => {
-  it("records the reveal and forces a variant question with canon-only material", async () => {
+describe("POST /api/reveal (AIに回答させる)", () => {
+  it("records the event, returns the AI answer, and forces a variant question", async () => {
     const before = temp.db.select().from(attempts).all().length;
     const res = await revealPost(
       jsonRequest("http://test/api/reveal", {
@@ -110,9 +110,11 @@ describe("POST /api/reveal", () => {
     );
     expect(res.status).toBe(200);
     const data = (await res.json()) as {
+      aiAnswer: string;
       canon: { theses: { id: string }[] };
       variantQuestion: string;
     };
+    expect(data.aiAnswer.length).toBeGreaterThan(0);
     expect(data.variantQuestion.length).toBeGreaterThan(0);
     expect(data.variantQuestion).not.toBe("人は自分自身を知ることができるか");
     // canon material is id-addressed theses from the seeded canon

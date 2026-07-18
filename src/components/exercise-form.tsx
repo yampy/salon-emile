@@ -2,8 +2,9 @@
 
 /**
  * Exercise workflow client: answer → grade → evaluation display, plus the
- * "答えを見る" guardrail (reveal is recorded server-side and immediately
- * replaced by a mandatory variant question).
+ * 「AIに回答させる」guardrail: the AI writes a worked answer for the current
+ * exercise (recorded server-side), the original stays visible, and an
+ * isomorphic variant question becomes the learner's task.
  */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,12 @@ type RevealCanon = {
   theses: { id: string; philosopher: string; claim: string }[];
 };
 
+type AiTurn = {
+  aiAnswer: string;
+  canon: RevealCanon;
+  variantQuestion: string;
+};
+
 type Props = {
   sessionN: number;
   exerciseKind: ExerciseKind;
@@ -28,16 +35,18 @@ type Props = {
 };
 
 export function ExerciseForm({ sessionN, exerciseKind, question, rubric }: Props) {
-  const [currentQuestion, setCurrentQuestion] = useState(question);
-  const [isVariant, setIsVariant] = useState(false);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
-  const [canon, setCanon] = useState<RevealCanon | null>(null);
+  const [aiTurn, setAiTurn] = useState<AiTurn | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // After the AI answered, the learner's task is the variant question.
+  const activeQuestion = aiTurn ? aiTurn.variantQuestion : question;
+
   async function submit() {
-    if (!answer.trim() || busy) return;
+    if (!answer.trim() || busy || aiBusy) return;
     setBusy(true);
     setError(null);
     try {
@@ -46,13 +55,13 @@ export function ExerciseForm({ sessionN, exerciseKind, question, rubric }: Props
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionN,
-          kind: isVariant
+          kind: aiTurn
             ? "variant"
             : exerciseKind === "mini_essay"
               ? "essay"
               : "exercise",
           exerciseKind,
-          question: currentQuestion,
+          question: activeQuestion,
           answer,
         }),
       });
@@ -66,67 +75,93 @@ export function ExerciseForm({ sessionN, exerciseKind, question, rubric }: Props
     }
   }
 
-  async function reveal() {
-    if (busy) return;
-    setBusy(true);
+  async function askAi() {
+    if (busy || aiBusy) return;
+    setAiBusy(true);
     setError(null);
     try {
       const res = await fetch("/api/reveal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionN, exerciseKind, question: currentQuestion }),
+        body: JSON.stringify({ sessionN, exerciseKind, question }),
       });
-      if (!res.ok) throw new Error(`取得に失敗しました (${res.status})`);
-      const data = (await res.json()) as {
-        canon: RevealCanon;
-        variantQuestion: string;
-      };
-      setCanon(data.canon);
-      setCurrentQuestion(data.variantQuestion);
-      setIsVariant(true);
+      if (!res.ok) throw new Error(`AIの回答生成に失敗しました (${res.status})`);
+      const data = (await res.json()) as AiTurn;
+      setAiTurn(data);
       setEvaluation(null);
       setAnswer("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "取得に失敗しました");
+      setError(e instanceof Error ? e.message : "AIの回答生成に失敗しました");
     } finally {
-      setBusy(false);
+      setAiBusy(false);
     }
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-md border border-border bg-card p-4">
-        {isVariant && (
-          <p className="mb-1 text-xs text-primary" data-testid="variant-notice">
-            正典を見たので、同型の変形問題に答えてください。
-          </p>
-        )}
+        <p className="mb-1 text-xs text-muted-foreground">
+          {aiTurn ? "元の問題(下でAIが回答済み)" : "問題"}
+        </p>
         <p data-testid="exercise-question" className="leading-relaxed">
-          {currentQuestion}
+          {question}
         </p>
       </div>
 
-      {canon && (
-        <details
-          open
-          className="rounded-md border border-accent bg-accent/40 p-4 text-sm"
-          data-testid="canon-reveal"
-        >
-          <summary className="cursor-pointer font-semibold">
-            正典の手がかり(curriculum.json由来)
-          </summary>
-          <div className="mt-2 flex flex-col gap-2 leading-relaxed">
-            {canon.core && <p>{canon.core}</p>}
-            {canon.method && <p>{canon.method}</p>}
-            {canon.reperesNote && <p>{canon.reperesNote}</p>}
-            {canon.theses.map((t) => (
-              <p key={t.id}>
-                <span className="text-xs text-muted-foreground">[{t.id}]</span>{" "}
-                {t.philosopher}: {t.claim}
-              </p>
-            ))}
+      {aiTurn && (
+        <>
+          <section
+            className="rounded-md border border-border bg-card p-4"
+            data-testid="ai-answer"
+          >
+            <h2 className="text-sm font-semibold">
+              AIの回答例
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                上の問題に対して
+              </span>
+            </h2>
+            <p className="mt-2 whitespace-pre-wrap leading-relaxed">
+              {aiTurn.aiAnswer}
+            </p>
+            <details className="mt-3">
+              <summary
+                className="cursor-pointer text-xs text-muted-foreground hover:text-primary"
+                data-testid="canon-reveal-toggle"
+              >
+                正典の手がかりも読む(curriculum.json由来)
+              </summary>
+              <div
+                className="mt-2 flex flex-col gap-2 text-sm leading-relaxed"
+                data-testid="canon-reveal"
+              >
+                {aiTurn.canon.core && <p>{aiTurn.canon.core}</p>}
+                {aiTurn.canon.method && <p>{aiTurn.canon.method}</p>}
+                {aiTurn.canon.reperesNote && <p>{aiTurn.canon.reperesNote}</p>}
+                {aiTurn.canon.theses.map((t) => (
+                  <p key={t.id}>
+                    <span className="text-xs text-muted-foreground">[{t.id}]</span>{" "}
+                    {t.philosopher}: {t.claim}
+                  </p>
+                ))}
+              </div>
+            </details>
+          </section>
+
+          <div
+            className="rounded-md border border-primary/40 bg-accent/30 p-4"
+            data-testid="variant-turn"
+          >
+            <p className="text-sm font-semibold text-accent-foreground">
+              今度はあなたの番 — 同型の変形問題
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              AIの回答を読んだ分、同じ型の別の問いで自分の手を動かします。下の入力欄はこの問いへの回答になります。
+            </p>
+            <p className="mt-2 leading-relaxed" data-testid="variant-question">
+              {aiTurn.variantQuestion}
+            </p>
           </div>
-        </details>
+        </>
       )}
 
       <form
@@ -139,31 +174,35 @@ export function ExerciseForm({ sessionN, exerciseKind, question, rubric }: Props
         <Textarea
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
-          placeholder="ここに書いてください"
+          placeholder={aiTurn ? "変形問題への回答をここに書いてください" : "ここに書いてください"}
           className="min-h-36 bg-card"
           data-testid="exercise-answer"
-          disabled={busy}
+          disabled={busy || aiBusy}
         />
         <div className="flex items-center gap-2">
           <Button
             type="submit"
-            disabled={busy || answer.trim().length === 0}
+            disabled={busy || aiBusy || answer.trim().length === 0}
             data-testid="exercise-submit"
           >
             提出して採点
           </Button>
-          {!isVariant && (
+          {!aiTurn && (
             <Button
               type="button"
               variant="outline"
-              onClick={() => void reveal()}
-              disabled={busy}
-              data-testid="reveal-button"
+              onClick={() => void askAi()}
+              disabled={busy || aiBusy}
+              data-testid="ai-answer-button"
             >
-              答えを見る
+              {aiBusy ? "AIが回答中…" : "AIに回答させる"}
             </Button>
           )}
-          {busy && <span className="text-sm text-muted-foreground">処理中…</span>}
+          {(busy || aiBusy) && (
+            <span className="text-sm text-muted-foreground">
+              {aiBusy ? "回答例と変形問題を用意しています…" : "採点中…"}
+            </span>
+          )}
         </div>
       </form>
 

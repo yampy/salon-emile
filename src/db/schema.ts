@@ -205,7 +205,8 @@ export type LlmRole =
   | "variantGenerator"
   | "modelAnswer"
   | "reading"
-  | "advisor";
+  | "advisor"
+  | "aiAnswer";
 
 /** The single global Q&A thread (質問) — one conversation, one user. */
 export const advisorMessages = sqliteTable("advisor_messages", {

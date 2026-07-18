@@ -12,6 +12,7 @@ import type { Db } from "@/db/client";
 import { attempts, cards, evaluations, type AttemptKind } from "@/db/schema";
 import { getModelSetting } from "@/db/settings";
 import {
+  AiAnswerSchema,
   averageScore,
   EvaluationSchema,
   LAPSE_THRESHOLD,
@@ -21,6 +22,7 @@ import {
 import type { ExerciseKind } from "@/domain/exercise";
 import { newCard } from "@/domain/fsrs";
 import { getLlmClient } from "@/llm";
+import { buildAiAnswerPrompt, buildAiAnswerSystem } from "@/llm/prompts/aiAnswer";
 import { buildGraderPrompt, buildGraderSystem } from "@/llm/prompts/grader";
 import { buildVariantPrompt, buildVariantSystem } from "@/llm/prompts/variantGenerator";
 import { getSessionPlan, type SessionPlanData } from "@/server/canon";
@@ -123,6 +125,26 @@ export async function gradeAttempt(
   return { attemptId: attempt.id, evaluation, average, lapseCardCreated };
 }
 
+/**
+ * Defensive sanitation: some models stuff analysis JSON into the question
+ * string. If it parses as JSON, pull out the actual question field.
+ */
+export function sanitizeVariantQuestion(raw: string): string {
+  const text = raw.trim();
+  if (text.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      const candidate = parsed.variant_question ?? parsed.question;
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return candidate.trim();
+      }
+    } catch {
+      // fall through — not JSON after all
+    }
+  }
+  return text;
+}
+
 /** Produce an isomorphic variant of a question via the light model. */
 export async function generateVariant(
   db: Db,
@@ -139,12 +161,14 @@ export async function generateVariant(
     schemaName: "variant",
   });
   recordUsage(db, "variantGenerator", lightModel, usage);
-  return object.question;
+  return sanitizeVariantQuestion(object.question);
 }
 
 export type RevealResult = {
   attemptId: number;
-  /** Canon material shown to the learner (never generated content). */
+  /** The AI's worked answer for this exercise statement. */
+  aiAnswer: string;
+  /** Canon material for reference (never generated content). */
   canon: {
     core: string | null;
     method: string | null;
@@ -156,8 +180,9 @@ export type RevealResult = {
 };
 
 /**
- * "答えを見る" guardrail: record the reveal as an attempt, hand back canon
- * material only, and require an immediate variant question.
+ * "AIに回答させる" guardrail: record the event as an attempt, generate the
+ * AI's worked answer, and require an immediate variant question so the
+ * learner still produces their own work.
  */
 export async function revealAnswer(
   db: Db,
@@ -181,10 +206,27 @@ export async function revealAnswer(
     .returning()
     .get();
 
-  const variantQuestion = await generateVariant(db, input.question, []);
+  const llm = getLlmClient();
+  const model = getModelSetting(db, "graderModel");
+  const [aiAnswerResult, variantQuestion] = await Promise.all([
+    llm.generateObject({
+      model,
+      system: buildAiAnswerSystem({
+        session: plan.session,
+        theses: plan.theses,
+        reperes: plan.reperes,
+      }),
+      prompt: buildAiAnswerPrompt(input.question),
+      schema: AiAnswerSchema,
+      schemaName: "aiAnswer",
+    }),
+    generateVariant(db, input.question, []),
+  ]);
+  recordUsage(db, "aiAnswer", model, aiAnswerResult.usage);
 
   return {
     attemptId: attempt.id,
+    aiAnswer: aiAnswerResult.object.answer,
     canon: {
       core: plan.session.core,
       method: plan.session.method,
