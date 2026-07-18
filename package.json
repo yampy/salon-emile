@@ -20,7 +20,8 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
     "db:verify": "tsx src/db/verify.ts",
-    "screenshots": "LLM_PROVIDER=mock playwright test --config playwright.screenshots.config.ts"
+    "screenshots": "LLM_PROVIDER=mock playwright test --config playwright.screenshots.config.ts",
+    "pregenerate": "tsx scripts/pregenerate.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.15",

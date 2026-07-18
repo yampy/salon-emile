@@ -50,6 +50,9 @@ drops the *d'*: `salon-emile`.)
   "reveal" shows canon material only, is logged (the dashboard shows your reveal
   rate) and forces a variant question; theses/quotes render only if their canon ID
   resolves.
+- **Ask anything** — a global Q&A chat with the whole curriculum in context;
+  answers explain, give one everyday example, and always point to the sessions
+  worth reading (linked), with repères/theses cited by canon id.
 - **Local & private** — Next.js bound to 127.0.0.1, SQLite on disk, no accounts, no
   cloud. A deterministic mock LLM runs the whole app (and all tests) without an API
   key.
@@ -63,6 +66,10 @@ drops the *d'*: `salon-emile`.)
 | Practice | Review | Dashboard |
 | --- | --- | --- |
 | ![Practice](./docs/screenshots/practice.png) | ![Review](./docs/screenshots/review.png) | ![Dashboard](./docs/screenshots/dashboard.png) |
+
+| Ask (global Q&A) | |
+| --- | --- |
+| ![Ask](./docs/screenshots/ask.png) | Every answer cites the sessions worth reading, linked to their textbook pages. |
 
 Regenerate anytime with `pnpm screenshots`.
 

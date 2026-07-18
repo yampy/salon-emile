@@ -64,6 +64,13 @@ test("五画面のスクリーンショットを生成する", async ({ page }) 
   await expect(page.getByTestId("mastery-radar")).toBeVisible();
   await capture(page, "dashboard.png");
 
+  // --- ask: the global Q&A with a session-linked answer
+  await page.goto("/ask");
+  await page.getByTestId("ask-input").fill("自分のことは自分が一番わかっている、は本当ですか?");
+  await page.getByTestId("ask-send").click();
+  await expect(page.getByTestId("session-ref-1").first()).toBeVisible();
+  await capture(page, "ask.png");
+
   // --- roadmap: progress bars and in-progress badges visible
   await page.goto("/");
   await expect(page.getByTestId("progress-overview")).toBeVisible();
