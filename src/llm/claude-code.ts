@@ -19,9 +19,6 @@ import type {
   SystemBlock,
 } from "./types";
 
-/** Tool name as the model sees it (SDK MCP namespace). */
-const ADVANCE_TOOL = "mcp__salon__advance_step";
-
 function joinSystem(blocks: SystemBlock[]): string {
   return blocks.map((b) => b.text).join("\n\n");
 }
@@ -64,37 +61,14 @@ function toUsage(usage: UsageLike | undefined): LlmUsage {
 export class ClaudeCodeClient implements LlmClient {
   async chatStream(params: ChatStreamParams): Promise<ChatStream> {
     const sdk = await import("@anthropic-ai/claude-agent-sdk");
-    const advanceState = { requested: false };
-
-    const salonServer = sdk.createSdkMcpServer({
-      name: "salon",
-      version: "1.0.0",
-      tools: [
-        sdk.tool(
-          "advance_step",
-          "学習者が現在のステップで実質的な産出(1文以上の思考の言語化)を出したと判断したときに、次のステップへの前進をサーバへ要求する。最終判定はサーバが行う。",
-          { reason: z.string().describe("前進を要求する根拠となる、学習者の産出の短い要約") },
-          async () => {
-            advanceState.requested = true;
-            return {
-              content: [
-                { type: "text", text: "要求を記録しました。進行の最終判定はサーバが行います。対話を続けてください。" },
-              ],
-            };
-          }
-        ),
-      ],
-    });
-
     const response = sdk.query({
       prompt: renderTranscript(params.messages),
       options: {
         systemPrompt: joinSystem(params.system),
         model: params.model,
-        maxTurns: 3,
+        maxTurns: 2,
         includePartialMessages: true,
-        mcpServers: params.allowAdvance ? { salon: salonServer } : {},
-        allowedTools: params.allowAdvance ? [ADVANCE_TOOL] : [],
+        allowedTools: [],
       },
     });
 
@@ -125,7 +99,6 @@ export class ClaudeCodeClient implements LlmClient {
             if (message.subtype === "success") {
               resolveFinal({
                 text: text.length > 0 ? text : message.result,
-                advanceRequested: advanceState.requested,
                 usage: toUsage(message.usage),
               });
             } else {

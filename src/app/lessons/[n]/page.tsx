@@ -9,9 +9,9 @@ import { ModelAnswerToggle } from "@/components/model-answer-toggle";
 import { SessionReadingView } from "@/components/session-reading";
 import { buttonVariants } from "@/components/ui/button";
 import { getDb } from "@/db/client";
-import { LESSON_STEPS } from "@/domain/lesson";
+import { EXERCISE_KINDS } from "@/domain/exercise";
 import { getSessionPlan } from "@/server/canon";
-import { getLatestRun } from "@/server/lesson";
+import { practiceProgress } from "@/server/practice-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +28,7 @@ export default async function TextbookPage({
     notFound();
   }
   const { session } = plan;
-  const run = getLatestRun(db, sessionN);
-  const stepIndex = run ? LESSON_STEPS.indexOf(run.step) + 1 : 0;
+  const progress = practiceProgress(db, sessionN);
   const hasNext = getSessionPlan(db, sessionN + 1) !== null;
 
   const questions =
@@ -39,27 +38,19 @@ export default async function TextbookPage({
         ? [session.exercise]
         : [];
 
-  const dialogueCta = (
+  const practiceCta = (
     <div className="flex flex-wrap items-center gap-3">
       <Link
-        href={`/lessons/${sessionN}/dialogue`}
+        href={`/practice?session=${sessionN}`}
         className={buttonVariants()}
-        data-testid="to-dialogue"
+        data-testid="to-practice"
       >
-        {run
-          ? run.status === "completed"
-            ? "対話の記録を見る"
-            : `対話レッスンを続ける(${stepIndex}/${LESSON_STEPS.length})`
-          : "対話レッスンをはじめる"}
+        {progress.attemptedKinds.length > 0
+          ? `演習を続ける(${progress.attemptedKinds.length}/${EXERCISE_KINDS.length}形式)`
+          : "この回の演習へ"}
       </Link>
-      <Link
-        href={`/practice?session=${sessionN}&kind=mini_essay`}
-        className={buttonVariants({ variant: "outline" })}
-      >
-        演習で試す
-      </Link>
-      {run?.status === "completed" && (
-        <span className="text-sm text-primary">この回の対話は完了しています</span>
+      {progress.completed && (
+        <span className="text-sm text-primary">この回は完了しています(ミニ論述採点済み)</span>
       )}
     </div>
   );
@@ -83,7 +74,7 @@ export default async function TextbookPage({
         </p>
       </div>
 
-      {dialogueCta}
+      {practiceCta}
 
       <div className="max-w-3xl" data-testid="textbook">
         <SessionReadingView sessionN={sessionN} theses={plan.theses} />
@@ -204,7 +195,7 @@ export default async function TextbookPage({
         </details>
       </div>
 
-      <div className="border-t border-border pt-5">{dialogueCta}</div>
+      <div className="border-t border-border pt-5">{practiceCta}</div>
     </article>
   );
 }

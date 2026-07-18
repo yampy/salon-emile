@@ -84,6 +84,5 @@ export async function advisorChat(db: Db, question: string): Promise<ChatStream>
     model: getModelSetting(db, "tutorModel"),
     system: buildAdvisorSystem(buildCanonDigest(db)),
     messages: history,
-    allowAdvance: false,
   });
 }

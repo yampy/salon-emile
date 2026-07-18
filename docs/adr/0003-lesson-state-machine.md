@@ -1,6 +1,14 @@
 # ADR 0003 — Lesson state machine with server-judged transitions
 
-**Status**: accepted
+**Status**: superseded (2026-07-18)
+
+> The dialogue lesson and its state machine were removed at the learner's
+> request: two parallel working modes (dialogue + practice) were confusing,
+> and the linear FSM could not be revisited freely. The single working
+> surface is now *practice* (six revisitable formats; a session completes
+> when its mini-essay is graded). The production-gate principle survives in
+> grading: progress still requires the learner's own output. Conversational
+> support lives in the global Q&A chat (質問).
 
 ## Context
 

@@ -31,10 +31,9 @@ drops the *d'*: `salon-emile`.)
   model with ARCS motivation and Mayer's personalization principle (see
   [docs/writing-guide.md](./docs/writing-guide.md)), plus cached AI model answers
   in the three-part dissertation form. The raw canon stays one accordion away.
-- **Socratic lessons** — 17 sessions, each walking `intuition → definition/repères →
-  theses → question → essay → bridge`. The tutor requests step advances — and the
-  learner can advance too — but the server grants them only after substantive
-  learner output.
+- **One working surface: practice** — each session's journey is textbook →
+  practice. The six formats are freely revisitable with a per-format checklist;
+  a session counts as complete once its mini-essay (the capstone) is graded.
 - **Rubric grading** — essays and exercises scored 0–4 on problematisation,
   concepts, argumentation, culture, expression, with evidence quotes and concrete
   next moves. Structured output only.
@@ -59,17 +58,14 @@ drops the *d'*: `salon-emile`.)
 
 ## Screenshots
 
-| Roadmap | Textbook | Lesson |
+| Roadmap | Textbook | Practice |
 | --- | --- | --- |
-| ![Roadmap](./docs/screenshots/roadmap.png) | ![Textbook](./docs/screenshots/textbook.png) | ![Lesson](./docs/screenshots/lesson.png) |
+| ![Roadmap](./docs/screenshots/roadmap.png) | ![Textbook](./docs/screenshots/textbook.png) | ![Practice](./docs/screenshots/practice.png) |
 
-| Practice | Review | Dashboard |
+| Review | Dashboard | Ask |
 | --- | --- | --- |
-| ![Practice](./docs/screenshots/practice.png) | ![Review](./docs/screenshots/review.png) | ![Dashboard](./docs/screenshots/dashboard.png) |
+| ![Review](./docs/screenshots/review.png) | ![Dashboard](./docs/screenshots/dashboard.png) | ![Ask](./docs/screenshots/ask.png) |
 
-| Ask (global Q&A) | |
-| --- | --- |
-| ![Ask](./docs/screenshots/ask.png) | Every answer cites the sessions worth reading, linked to their textbook pages. |
 
 Regenerate anytime with `pnpm screenshots`.
 
@@ -81,12 +77,11 @@ flowchart LR
     CJ["src/data/curriculum.json\n17 sessions / 17 notions / 31 repères / 64 theses"]
   end
   subgraph app["Next.js (127.0.0.1)"]
-    UI["Screens\nroadmap · lesson · practice · review · dashboard · settings"]
-    RH["Route Handlers\nchat · attempts · reveal · review"]
-    SRV["server/\nlesson · grading · mastery · review"]
+    UI["Screens\nroadmap · textbook · practice · review · ask · dashboard · settings"]
+    RH["Route Handlers\nattempts · reveal · review · ask · readings"]
+    SRV["server/\ngrading · mastery · review · advisor · reading"]
   end
   subgraph domain["domain/ (pure)"]
-    FSM["lesson state machine"]
     EMA["mastery EMA α=0.3"]
     MAP["score→FSRS rating"]
     SCH["Zod schemas"]
@@ -103,7 +98,7 @@ flowchart LR
   end
   CJ -- "seed (idempotent)" --> CANON
   UI --> RH --> SRV
-  SRV --> FSM & EMA & MAP & SCH
+  SRV --> EMA & MAP & SCH
   SRV --> CL
   CL --> AC & MC
   CL --> PR
@@ -153,7 +148,7 @@ pnpm typecheck        # tsc --noEmit
 pnpm lint             # eslint
 pnpm test             # unit + integration (vitest, temp SQLite)
 pnpm test:coverage    # domain statement coverage ≥ 90% enforced
-pnpm e2e              # Playwright: lesson walkthrough, essay grading, review round
+pnpm e2e              # Playwright: textbook, session journey, grading, review, ask
 ```
 
 ## Design philosophy

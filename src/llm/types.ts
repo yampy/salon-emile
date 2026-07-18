@@ -32,17 +32,10 @@ export type ChatStreamParams = {
   model: string;
   system: SystemBlock[];
   messages: ChatMessage[];
-  /**
-   * Expose the `advance_step` tool to the tutor. The client only *reports*
-   * whether the model requested it — the server alone decides whether the
-   * lesson actually advances.
-   */
-  allowAdvance: boolean;
 };
 
 export type ChatStreamFinal = {
   text: string;
-  advanceRequested: boolean;
   usage: LlmUsage;
 };
 

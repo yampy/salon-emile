@@ -3,14 +3,13 @@
  * client — no API key, no network, and identical output for identical input.
  *
  * Dispatch rules (all derived from the prompt text itself):
- * - tutor: canned reply per lesson step (parsed from the volatile system
- *   block); requests advance_step iff the last user message is substantive.
+ * - chat: a fixed advisor answer (when the advisor marker is present) or a
+ *   generic fallback.
  * - evaluation: strong scores for answers >= 40 chars, weak (lapse-worthy)
  *   scores below that.
  * - cardGrade: 3.0 for answers >= 10 chars, 1.0 below.
  * - variant: transforms the <question> tag, numbered by prior variants.
  */
-import { isSubstantiveProduction, type LessonStep } from "@/domain/lesson";
 import type {
   ChatStream,
   ChatStreamParams,
@@ -27,31 +26,11 @@ export const MOCK_CARD_PASS_LENGTH = 10;
 
 const MOCK_USAGE: LlmUsage = { inputTokens: 0, outputTokens: 0 };
 
-const TUTOR_REPLIES: Record<LessonStep, string> = {
-  intuition:
-    "ようこそ、サロンへ。まず即答でかまいません——この問いに、あなたの最初の直観はどう答えますか。そう考える理由も一文で添えてください。",
-  definition_reperes:
-    "よい出発点です。では、いま使った言葉を自分の言葉で定義してみましょう。この回のrepèresの対を使うと、どこに線が引けますか。",
-  theses:
-    "あなたの定義を、正典のテーゼと突き合わせてみましょう。このテーゼに、あなたは賛成しますか、反対しますか。理由を一文で。",
-  question:
-    "ここまでで、対立する二つの直観が見えてきました。両方に理があるとすれば、問いはどう定式化できますか。緊張を一文にしてください。",
-  essay:
-    "では小さな論述に挑戦しましょう。thèse→antithèse→dépassementの順で、数文ずつ書いてみてください。書き終えるまで私は評価しません。",
-  bridge:
-    "今日の議論で、あなたの最初の直観はどう変化しましたか。一文で要約してください。それが次回への橋になります。",
-};
-
 const FALLBACK_REPLY =
   "続けましょう。いまの考えを、もう一歩だけ言葉にしてみてください。";
 
 const ADVISOR_REPLY =
   "よい質問です。それは「知ること」と「感じること」の区別に関わる主題ですね。あなた自身の経験から出発して考えると理解が深まります。\n\n参考になる回: 第0回(問いの立て方そのものを学べます)・第1回(意識と自己認識を扱います。テーゼ [s1-t1] が出発点になります)。";
-
-function parseStep(systemText: string): LessonStep | null {
-  const match = systemText.match(/現在のステップ: (\w+)/);
-  return match ? (match[1] as LessonStep) : null;
-}
 
 function extractTag(text: string, tag: string): string {
   const match = text.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
@@ -68,28 +47,11 @@ async function* chunked(text: string): AsyncIterable<string> {
 export class MockLlmClient implements LlmClient {
   async chatStream(params: ChatStreamParams): Promise<ChatStream> {
     const systemText = params.system.map((b) => b.text).join("\n");
-    const step = parseStep(systemText);
     const isAdvisor = systemText.includes("役割: 案内人(advisor)");
-    const reply = isAdvisor
-      ? ADVISOR_REPLY
-      : step
-        ? TUTOR_REPLIES[step]
-        : FALLBACK_REPLY;
-    const lastUser = [...params.messages]
-      .reverse()
-      .find((m) => m.role === "user");
-    const advanceRequested =
-      params.allowAdvance &&
-      lastUser !== undefined &&
-      isSubstantiveProduction(lastUser.content);
-
+    const reply = isAdvisor ? ADVISOR_REPLY : FALLBACK_REPLY;
     return {
       textStream: chunked(reply),
-      final: async () => ({
-        text: reply,
-        advanceRequested,
-        usage: MOCK_USAGE,
-      }),
+      final: async () => ({ text: reply, usage: MOCK_USAGE }),
     };
   }
 

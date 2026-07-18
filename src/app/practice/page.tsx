@@ -14,6 +14,7 @@ import {
 } from "@/domain/exercise";
 import { getSessionPlan, listSessions } from "@/server/canon";
 import { listAttemptHistory } from "@/server/grading";
+import { practiceProgress } from "@/server/practice-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -42,13 +43,36 @@ export default async function PracticePage({
   });
 
   const history = listAttemptHistory(db, activePlan.session.n, 5);
+  const progress = practiceProgress(db, activePlan.session.n);
+  const doneKinds = new Set(progress.attemptedKinds);
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold">演習</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          6つの形式で、正典の問いに取り組みます。提出すると5観点で採点されます。
+          6つの形式で、正典の問いに取り組みます。順番は自由、何度でも。提出すると5観点で採点されます。
+        </p>
+        <p className="mt-1 text-sm" data-testid="practice-progress">
+          この回の進み具合:{" "}
+          <span className="font-semibold text-primary">
+            {progress.attemptedKinds.length} / {EXERCISE_KINDS.length} 形式
+          </span>
+          {progress.completed ? (
+            <span className="ml-2 rounded-sm bg-accent px-1.5 py-0.5 text-xs text-accent-foreground" data-testid="session-complete">
+              この回は完了(ミニ論述採点済み)
+            </span>
+          ) : (
+            <span className="ml-2 text-xs text-muted-foreground">
+              ミニ論述が採点されると、この回は完了になります
+            </span>
+          )}
+          <Link
+            href={`/lessons/${activePlan.session.n}`}
+            className="ml-3 text-xs text-primary hover:underline"
+          >
+            教科書に戻る
+          </Link>
         </p>
       </div>
 
@@ -89,7 +113,9 @@ export default async function PracticePage({
                 ? "rounded-md bg-primary px-3 py-1.5 text-primary-foreground"
                 : "rounded-md border border-border bg-card px-3 py-1.5 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
             }
+            data-done={doneKinds.has(k)}
           >
+            {doneKinds.has(k) ? "✓ " : ""}
             {EXERCISE_LABELS[k]}
           </Link>
         ))}

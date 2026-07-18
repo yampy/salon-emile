@@ -1,19 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CardGradeSchema, EvaluationSchema, VariantSchema } from "@/domain/evaluation.schema";
 import { MockLlmClient } from "@/llm/mock";
+import { buildAdvisorSystem } from "@/llm/prompts/advisor";
 import { buildCardGraderPrompt } from "@/llm/prompts/cardGrader";
 import { buildGraderPrompt } from "@/llm/prompts/grader";
 import { buildVariantPrompt } from "@/llm/prompts/variantGenerator";
-import type { SystemBlock } from "@/llm/types";
 
 const mock = new MockLlmClient();
-
-const tutorSystem: SystemBlock[] = [
-  { text: "constitution", cache: true },
-  { text: "現在のステップ: intuition\n狙い: ..." },
-];
-
-const SUBSTANTIVE = "労働は自由の条件でもあり妨げでもあると思う。";
 
 async function collect(stream: AsyncIterable<string>): Promise<string> {
   let out = "";
@@ -22,49 +15,32 @@ async function collect(stream: AsyncIterable<string>): Promise<string> {
 }
 
 describe("MockLlmClient chatStream", () => {
-  it("streams a deterministic step-specific reply", async () => {
+  it("streams a deterministic advisor answer with session references", async () => {
     const a = await mock.chatStream({
       model: "m",
-      system: tutorSystem,
-      messages: [{ role: "user", content: "こんにちは" }],
-      allowAdvance: true,
+      system: buildAdvisorSystem("canon digest"),
+      messages: [{ role: "user", content: "質問です" }],
     });
     const b = await mock.chatStream({
       model: "m",
-      system: tutorSystem,
-      messages: [{ role: "user", content: "こんにちは" }],
-      allowAdvance: true,
+      system: buildAdvisorSystem("canon digest"),
+      messages: [{ role: "user", content: "質問です" }],
     });
     const [textA, textB] = [await collect(a.textStream), await collect(b.textStream)];
     expect(textA).toBe(textB);
     expect(textA).toBe((await b.final()).text);
-    expect(textA.length).toBeGreaterThan(0);
+    expect(textA).toMatch(/第\d+回/);
   });
 
-  it("requests advance only after substantive learner output", async () => {
-    const withProduction = await mock.chatStream({
+  it("falls back to a generic reply outside the advisor role", async () => {
+    const chat = await mock.chatStream({
       model: "m",
-      system: tutorSystem,
-      messages: [{ role: "user", content: SUBSTANTIVE }],
-      allowAdvance: true,
+      system: [{ text: "何の役割マーカーもない" }],
+      messages: [{ role: "user", content: "こんにちは" }],
     });
-    expect((await withProduction.final()).advanceRequested).toBe(true);
-
-    const trivial = await mock.chatStream({
-      model: "m",
-      system: tutorSystem,
-      messages: [{ role: "user", content: "はい" }],
-      allowAdvance: true,
-    });
-    expect((await trivial.final()).advanceRequested).toBe(false);
-
-    const disallowed = await mock.chatStream({
-      model: "m",
-      system: tutorSystem,
-      messages: [{ role: "user", content: SUBSTANTIVE }],
-      allowAdvance: false,
-    });
-    expect((await disallowed.final()).advanceRequested).toBe(false);
+    const text = await collect(chat.textStream);
+    expect(text.length).toBeGreaterThan(0);
+    expect(text).not.toMatch(/参考になる回/);
   });
 });
 

@@ -8,8 +8,6 @@ import { expect, test, type Page } from "@playwright/test";
 
 const OUT_DIR = path.join(process.cwd(), "docs", "screenshots");
 
-const SUBSTANTIVE =
-  "労働は強制であると同時に、人間を自然の必然性から解放する営みでもある。この緊張こそが問いを成立させると考える。";
 const ESSAY =
   "自己は直接に感じられるがゆえに自明に知られると思える。しかし知は対象化と検証を要する営みであり、自己への近さはむしろ距離の欠如として認識の障害となる。ゆえに自己認識は内省ではなく、行為や他者のまなざしを経由した迂回によって可能になると再定式化できる。";
 const RECALL =
@@ -21,15 +19,6 @@ async function capture(page: Page, name: string) {
 
 test("五画面のスクリーンショットを生成する", async ({ page }) => {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-
-  // --- lesson: open session 0, one exchange, capture with the step banner
-  await page.goto("/lessons/0/dialogue");
-  await page.getByTestId("start-lesson").click();
-  await expect(page.locator('[data-role="assistant"]').first()).not.toBeEmpty();
-  await page.getByTestId("chat-input").fill(SUBSTANTIVE);
-  await page.getByTestId("chat-send").click();
-  await expect(page.getByTestId("step-transition")).toBeVisible();
-  await capture(page, "lesson.png");
 
   // --- textbook: the reading page for session 1
   await page.goto("/lessons/1");

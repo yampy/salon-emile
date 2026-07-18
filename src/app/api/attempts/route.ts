@@ -17,7 +17,6 @@ const BodySchema = z.object({
   exerciseKind: z.enum(EXERCISE_KINDS).optional(),
   question: z.string().trim().min(1),
   answer: z.string().trim().min(1),
-  lessonRunId: z.number().int().positive().optional(),
 });
 
 export async function POST(request: Request): Promise<Response> {

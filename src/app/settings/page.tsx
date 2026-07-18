@@ -14,7 +14,7 @@ import { updateModelSettings } from "./actions";
 export const dynamic = "force-dynamic";
 
 const SLOT_LABELS: Record<(typeof MODEL_SETTING_KEYS)[number], string> = {
-  tutorModel: "tutor(対話)",
+  tutorModel: "main(読み物・質問)",
   graderModel: "grader(採点)",
   lightModel: "light(軽量採点・変形問題)",
 };

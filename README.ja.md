@@ -27,9 +27,9 @@ FSRS間隔反復で定着させます。哲学教育 × 学習科学 × LLM を�
   構成は5E授業モデル+ARCS動機づけ+Mayerのパーソナライゼーション原理に基づく
   ([docs/writing-guide.md](./docs/writing-guide.md))。三部構成の解答例(AI生成・
   キャッシュ)つき。原典の指導案もアコーディオンひとつで読める。
-- **ソクラテス式レッスン** — 全17回。各回は「直観 → 定義とrepères → テーゼ →
-  問い → 論述 → 橋渡し」を歩む。前進はチューターの要求でも学習者自身のボタンでも
-  よいが、実質的な産出があったかをサーバが判定して初めて進む。
+- **作業の場は演習ひとつ** — 各回の流れは「教科書 → 演習」。6形式は自由な順で
+  何度でも取り組め、形式ごとのチェックリストで進み具合が見える。ミニ論述
+  (集大成形式)が採点されると、その回は完了になる。
 - **ルーブリック採点** — 問題化・概念・論証・教養・表現の5観点を各0〜4で採点。
   根拠の引用と「次の一手」つき。出力は構造化データのみ。
 - **演習6形式** — 二直観抽出・repère適用・一文論述・problématique構築・
@@ -51,17 +51,14 @@ FSRS間隔反復で定着させます。哲学教育 × 学習科学 × LLM を�
 
 ## スクリーンショット
 
-| ロードマップ | 教科書 | レッスン |
+| ロードマップ | 教科書 | 演習 |
 | --- | --- | --- |
-| ![ロードマップ](./docs/screenshots/roadmap.png) | ![教科書](./docs/screenshots/textbook.png) | ![レッスン](./docs/screenshots/lesson.png) |
+| ![ロードマップ](./docs/screenshots/roadmap.png) | ![教科書](./docs/screenshots/textbook.png) | ![演習](./docs/screenshots/practice.png) |
 
-| 演習 | 復習 | ダッシュボード |
+| 復習 | ダッシュボード | 質問 |
 | --- | --- | --- |
-| ![演習](./docs/screenshots/practice.png) | ![復習](./docs/screenshots/review.png) | ![ダッシュボード](./docs/screenshots/dashboard.png) |
+| ![復習](./docs/screenshots/review.png) | ![ダッシュボード](./docs/screenshots/dashboard.png) | ![質問](./docs/screenshots/ask.png) |
 
-| 質問(全体Q&A) | |
-| --- | --- |
-| ![質問](./docs/screenshots/ask.png) | 回答は必ず参考になる回を挙げ、その回の教科書へリンクします。 |
 
 `pnpm screenshots` でいつでも再生成できます。
 
@@ -73,12 +70,11 @@ flowchart LR
     CJ["src/data/curriculum.json\n17回 / 17概念 / 31 repères / 64テーゼ"]
   end
   subgraph app["Next.js (127.0.0.1)"]
-    UI["画面\nロードマップ · レッスン · 演習 · 復習 · ダッシュボード · 設定"]
-    RH["Route Handlers\nchat · attempts · reveal · review"]
-    SRV["server/\nlesson · grading · mastery · review"]
+    UI["画面\nロードマップ · 教科書 · 演習 · 復習 · 質問 · ダッシュボード · 設定"]
+    RH["Route Handlers\nattempts · reveal · review · ask · readings"]
+    SRV["server/\ngrading · mastery · review · advisor · reading"]
   end
   subgraph domain["domain/(純粋ロジック)"]
-    FSM["レッスン状態機械"]
     EMA["習熟度EMA α=0.3"]
     MAP["score→FSRS rating写像"]
     SCH["Zodスキーマ"]
@@ -95,7 +91,7 @@ flowchart LR
   end
   CJ -- "シード(冪等)" --> CANON
   UI --> RH --> SRV
-  SRV --> FSM & EMA & MAP & SCH
+  SRV --> EMA & MAP & SCH
   SRV --> CL
   CL --> AC & MC
   CL --> PR
@@ -145,7 +141,7 @@ pnpm typecheck        # tsc --noEmit
 pnpm lint             # eslint
 pnpm test             # unit + integration(vitest・一時SQLite)
 pnpm test:coverage    # domainのstatementカバレッジ ≥ 90% を強制
-pnpm e2e              # Playwright: レッスン通し・論述採点・復習1周
+pnpm e2e              # Playwright: 教科書・回の完了・採点・復習・質問
 ```
 
 ## 設計思想

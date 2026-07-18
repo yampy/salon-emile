@@ -6,10 +6,10 @@
 import Link from "next/link";
 import { ProgressOverview } from "@/components/progress-overview";
 import { getDb } from "@/db/client";
-import { LESSON_STEPS } from "@/domain/lesson";
+import { EXERCISE_KINDS } from "@/domain/exercise";
 import { listSessions } from "@/server/canon";
-import { listActiveRuns, listCompletedRuns } from "@/server/lesson";
 import { isSessionMasteryReached } from "@/server/mastery";
+import { practiceProgressBySession } from "@/server/practice-progress";
 import { reviewedCountsByKind } from "@/server/review";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +17,10 @@ export const dynamic = "force-dynamic";
 export default async function RoadmapPage() {
   const db = getDb();
   const sessions = listSessions(db);
-  const completed = new Set(listCompletedRuns(db).map((r) => r.sessionN));
   const cardProgress = reviewedCountsByKind(db);
-  const inProgress = new Map(
-    listActiveRuns(db)
-      .filter((r) => !completed.has(r.sessionN))
-      .map((r) => [r.sessionN, LESSON_STEPS.indexOf(r.step) + 1])
+  const practice = practiceProgressBySession(db);
+  const completed = new Set(
+    [...practice.entries()].filter(([, p]) => p.completed).map(([n]) => n)
   );
 
   // Soft gate: session n recommends n+1 when its mastery average clears the
@@ -56,7 +54,7 @@ export default async function RoadmapPage() {
 
       <ProgressOverview
         items={[
-          { label: "レッスン完了", done: completed.size, total: sessions.length },
+          { label: "回の完了(ミニ論述)", done: completed.size, total: sessions.length },
           {
             label: "repères 復習済み",
             done: cardProgress.repere.reviewed,
@@ -91,12 +89,12 @@ export default async function RoadmapPage() {
                           推奨
                         </span>
                       )}
-                      {inProgress.has(session.n) && (
+                      {practice.has(session.n) && !completed.has(session.n) && (
                         <span
                           className="rounded-sm border border-primary/40 px-1.5 py-0.5 text-primary"
                           data-testid={`in-progress-${session.n}`}
                         >
-                          対話中 {inProgress.get(session.n)}/{LESSON_STEPS.length}
+                          演習 {practice.get(session.n)!.attemptedKinds.length}/{EXERCISE_KINDS.length}
                         </span>
                       )}
                       {completed.has(session.n) && (

@@ -28,8 +28,8 @@ test("教科書ページで読み物を読み、解答例を開ける", async ({
   await expect(answer).toContainText("problématique");
   await expect(answer).toContainText("dépassement");
 
-  // the dialogue lesson is one click away
-  await page.getByTestId("to-dialogue").first().click();
-  await expect(page).toHaveURL(/\/lessons\/1\/dialogue/);
-  await expect(page.getByTestId("start-lesson")).toBeVisible();
+  // practice is one click away
+  await page.getByTestId("to-practice").first().click();
+  await expect(page).toHaveURL(/\/practice\?session=1/);
+  await expect(page.getByTestId("practice-progress")).toBeVisible();
 });

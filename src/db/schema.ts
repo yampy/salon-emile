@@ -18,7 +18,6 @@ import {
 } from "drizzle-orm/sqlite-core";
 import type { RubricCriterion } from "@/domain/curriculum.schema";
 import type { ExerciseKind } from "@/domain/exercise";
-import type { LessonStep } from "@/domain/lesson";
 
 const createdAt = () =>
   integer("created_at", { mode: "timestamp_ms" })
@@ -101,29 +100,6 @@ export const finalEssayQuestions = sqliteTable("final_essay_questions", {
 // Learning tables (single local user; gitignored via data/)
 // ---------------------------------------------------------------------------
 
-export const lessonRuns = sqliteTable("lesson_runs", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sessionN: integer("session_n")
-    .notNull()
-    .references(() => sessions.n),
-  step: text("step").$type<LessonStep>().notNull().default("intuition"),
-  status: text("status").$type<"active" | "completed">().notNull().default("active"),
-  createdAt: createdAt(),
-  completedAt: integer("completed_at", { mode: "timestamp_ms" }),
-});
-
-export const messages = sqliteTable("messages", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  lessonRunId: integer("lesson_run_id")
-    .notNull()
-    .references(() => lessonRuns.id),
-  role: text("role").$type<"user" | "assistant">().notNull(),
-  /** Lesson step during which the message was uttered. */
-  step: text("step").$type<LessonStep>().notNull(),
-  content: text("content").notNull(),
-  createdAt: createdAt(),
-});
-
 export type AttemptKind = "exercise" | "essay" | "reveal" | "variant";
 
 export const attempts = sqliteTable("attempts", {
@@ -135,7 +111,6 @@ export const attempts = sqliteTable("attempts", {
     .notNull()
     .references(() => sessions.n),
   notionId: text("notion_id").references(() => notions.id),
-  lessonRunId: integer("lesson_run_id").references(() => lessonRuns.id),
   question: text("question").notNull(),
   /** Learner production; empty string for reveal events. */
   answer: text("answer").notNull(),

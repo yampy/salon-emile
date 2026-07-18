@@ -34,7 +34,6 @@ export type GradeInput = {
   exerciseKind?: ExerciseKind;
   question: string;
   answer: string;
-  lessonRunId?: number;
 };
 
 export type GradeResult = {
@@ -58,7 +57,6 @@ export async function gradeAttempt(
       exerciseKind: input.exerciseKind ?? null,
       sessionN: input.sessionN,
       notionId: plan.notionIds[0] ?? null,
-      lessonRunId: input.lessonRunId ?? null,
       question: input.question,
       answer: input.answer,
     })
@@ -177,7 +175,6 @@ export async function revealAnswer(
       exerciseKind: input.exerciseKind ?? null,
       sessionN: input.sessionN,
       notionId: plan.notionIds[0] ?? null,
-      lessonRunId: null,
       question: input.question,
       answer: "",
     })

@@ -28,9 +28,13 @@ export function createDb(filePath: string = databasePath()): Db {
   fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
   const sqlite = new Database(filePath);
   sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
+  // Migrations run with foreign keys off (standard SQLite practice — table
+  // rebuilds and drops would otherwise trip child references mid-migration);
+  // enforcement is enabled for the application connection afterwards.
+  sqlite.pragma("foreign_keys = OFF");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+  sqlite.pragma("foreign_keys = ON");
   return db;
 }
 

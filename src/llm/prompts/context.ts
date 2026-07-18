@@ -4,7 +4,6 @@
  * curriculum.json) — prompt modules only add instructional framing.
  */
 import type { RubricCriterion } from "@/domain/curriculum.schema";
-import type { LessonStep } from "@/domain/lesson";
 
 export type SessionPlan = {
   n: number;
@@ -76,17 +75,3 @@ export function renderSessionPlan(
   return lines.join("\n");
 }
 
-/** Human-readable step guidance for the tutor (volatile system block). */
-export const STEP_GUIDANCE: Record<LessonStep, string> = {
-  intuition:
-    "導入の問いを提示し、学習者から対立する直観を引き出す。学習者が最初の直観を言語化するまで先へ進まない。",
-  definition_reperes:
-    "本回の核心概念とrepèresを、学習者の直観に接続しながら定義させる。定義文は学習者自身に書かせる。",
-  theses:
-    "正典テーゼを1つずつ検討させる。テーゼは必ずID付きで提示し、学習者に賛否と理由を言語化させる。",
-  question:
-    "本回の問いをproblématique(対立する直観の緊張)として定式化させる。",
-  essay: "ミニ論述(thèse→antithèse→dépassement)を書かせる。書き終えるまで採点や模範例を示さない。",
-  bridge:
-    "本回の学びを要約させ、次回への橋渡しを予告する。学習者自身の言葉での要約を促す。",
-};
