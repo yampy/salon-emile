@@ -1,13 +1,12 @@
 "use client";
 
 /**
- * Client side of the lesson dialogue: sends learner messages, renders the
- * tutor's streamed reply, and refetches lesson state after each exchange.
- *
- * Two ways forward, both judged by the server (a substantive learner
- * production in the current step is always required):
- * - the tutor requests advance_step during the dialogue, or
- * - the learner presses「次のステップへ」themselves.
+ * Client side of the lesson dialogue. The chat is per-step:
+ * - advancing shows a banner; entering the next step starts a clean chat
+ *   (earlier productions still reach the tutor via system context);
+ * - 「このステップを最初から」 wipes the current step's dialogue and its
+ *   productions, restarting the advance gate;
+ * - transitions are always judged server-side.
  */
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -44,6 +43,8 @@ type LessonState = {
   status: "active" | "completed";
 };
 
+type ServerState = LessonState & { messages: ChatDisplayMessage[] };
+
 type Props = {
   sessionN: number;
   initialStep: LessonStep;
@@ -68,24 +69,44 @@ export function LessonChat({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advanceNote, setAdvanceNote] = useState<string | null>(null);
+  /** Set when the server advanced mid-exchange; the banner offers the clean start. */
+  const [pendingStep, setPendingStep] = useState<LessonStep | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
-  const refreshState = useCallback(async () => {
+  const fetchState = useCallback(async (): Promise<ServerState | null> => {
     const res = await fetch(`/api/lessons/${sessionN}`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = (await res.json()) as {
-      run: { step: LessonStep; status: "active" | "completed" } | null;
+      run:
+        | (LessonState & {
+            messages: { role: "user" | "assistant"; content: string }[];
+          })
+        | null;
     };
-    if (data.run) {
-      setLesson({ step: data.run.step, status: data.run.status });
-      return data.run;
-    }
-    return null;
+    if (!data.run) return null;
+    return {
+      step: data.run.step,
+      status: data.run.status,
+      messages: data.run.messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    };
   }, [sessionN]);
+
+  /** Enter the (already advanced) step with a clean chat. */
+  const enterStep = useCallback(async () => {
+    const state = await fetchState();
+    if (!state) return;
+    setLesson({ step: state.step, status: state.status });
+    setMessages(state.messages);
+    setPendingStep(null);
+    setAdvanceNote(null);
+  }, [fetchState]);
 
   const exchange = useCallback(
     async (body: { message?: string; start?: boolean }) => {
@@ -114,14 +135,22 @@ export function LessonChat({
           setMessages((prev) => {
             const next = [...prev];
             const last = next[next.length - 1];
-            next[next.length - 1] = {
-              ...last,
-              content: last.content + chunk,
-            };
+            next[next.length - 1] = { ...last, content: last.content + chunk };
             return next;
           });
         }
-        await refreshState();
+        // Detect a server-side advance without wiping what's on screen:
+        // the banner lets the learner enter the next step cleanly.
+        const state = await fetchState();
+        if (state) {
+          if (state.status === "completed") {
+            setLesson({ step: state.step, status: state.status });
+            setMessages(state.messages);
+            setPendingStep(null);
+          } else if (state.step !== lesson.step) {
+            setPendingStep(state.step);
+          }
+        }
       } catch (e) {
         setMessages((prev) => prev.slice(0, -1));
         setError(e instanceof Error ? e.message : "通信に失敗しました");
@@ -129,7 +158,7 @@ export function LessonChat({
         setBusy(false);
       }
     },
-    [sessionN, refreshState]
+    [sessionN, fetchState, lesson.step]
   );
 
   const advance = useCallback(async () => {
@@ -141,11 +170,7 @@ export function LessonChat({
       const res = await fetch(`/api/lessons/${sessionN}/advance`, {
         method: "POST",
       });
-      const data = (await res.json()) as {
-        message?: string;
-        completed?: boolean;
-        step?: LessonStep;
-      };
+      const data = (await res.json()) as { message?: string };
       if (res.status === 409) {
         setAdvanceNote(data.message ?? "まだ進めません。");
         return;
@@ -153,18 +178,33 @@ export function LessonChat({
       if (!res.ok) {
         throw new Error(`advance failed (${res.status})`);
       }
-      await refreshState();
-      setAdvanceNote(
-        data.completed
-          ? null
-          : `ステップを進めました: ${STEP_LABELS[data.step ?? "intuition"]}`
-      );
+      // Manual advance = the learner wants to move on now: enter cleanly.
+      await enterStep();
     } catch (e) {
       setError(e instanceof Error ? e.message : "通信に失敗しました");
     } finally {
       setBusy(false);
     }
-  }, [busy, sessionN, refreshState]);
+  }, [busy, sessionN, enterStep]);
+
+  const resetStep = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setAdvanceNote(null);
+    try {
+      const res = await fetch(`/api/lessons/${sessionN}/chat`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`reset failed (${res.status})`);
+      setMessages([]);
+      setPendingStep(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "リセットに失敗しました");
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, sessionN]);
 
   const send = useCallback(() => {
     const message = input.trim();
@@ -176,6 +216,7 @@ export function LessonChat({
   const started = messages.length > 0;
   const completed = lesson.status === "completed";
   const currentIndex = STEP_ORDER.indexOf(lesson.step);
+  const isFirstStep = lesson.step === STEP_ORDER[0];
 
   return (
     <div className="flex flex-col gap-4">
@@ -183,7 +224,7 @@ export function LessonChat({
         className="flex flex-wrap gap-x-4 gap-y-1 text-sm"
         aria-label="レッスンの進行"
         data-testid="step-indicator"
-        data-current-step={lesson.step}
+        data-current-step={pendingStep ?? lesson.step}
         data-status={lesson.status}
       >
         {STEP_ORDER.map((step, i) => (
@@ -191,9 +232,9 @@ export function LessonChat({
             key={step}
             data-step={step}
             className={
-              step === lesson.step && !completed
+              step === (pendingStep ?? lesson.step) && !completed
                 ? "font-semibold text-primary"
-                : i < currentIndex || completed
+                : i < STEP_ORDER.indexOf(pendingStep ?? lesson.step) || completed
                   ? "text-foreground"
                   : "text-muted-foreground"
             }
@@ -203,7 +244,7 @@ export function LessonChat({
         ))}
       </ol>
 
-      {!completed && (
+      {!completed && !pendingStep && (
         <div
           className="rounded-md border border-accent bg-accent/30 px-4 py-3 text-sm leading-relaxed"
           data-testid="step-goal"
@@ -217,7 +258,7 @@ export function LessonChat({
             {STEP_GUIDANCE[lesson.step]}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            進み方: このステップであなたの考えを1文以上書くと、チューターの判断または下の「次のステップへ」ボタンで進めます。全{STEP_ORDER.length}ステップです。
+            進み方: このステップであなたの考えを1文以上書くと、チューターの判断または「次のステップへ」ボタンで進めます。ステップが進むと、チャットはまっさらな状態から始まります。
           </p>
         </div>
       )}
@@ -226,9 +267,11 @@ export function LessonChat({
         className="flex min-h-64 flex-col gap-3 rounded-md border border-border bg-card p-4"
         data-testid="chat-log"
       >
-        {!started && (
+        {!started && !completed && (
           <p className="text-muted-foreground">
-            準備ができたら、レッスンを開始してください。教科書を先に読むのもおすすめです。
+            {isFirstStep
+              ? "準備ができたら、レッスンを開始してください。教科書を先に読むのもおすすめです。"
+              : "新しいステップです。チューターに口火を切ってもらうか、そのまま自分の考えを書き始めてください。"}
           </p>
         )}
         {messages.map((m, i) => (
@@ -258,10 +301,26 @@ export function LessonChat({
         </p>
       )}
 
-      {completed ? (
+      {pendingStep && !completed ? (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-md border border-primary/30 bg-accent/30 px-4 py-3"
+          data-testid="step-transition"
+        >
+          <p className="text-sm">
+            ステップが進みました: 次は
+            <span className="mx-1 font-semibold text-primary">
+              {STEP_LABELS[pendingStep]}
+            </span>
+            です。
+          </p>
+          <Button onClick={() => void enterStep()} disabled={busy} data-testid="enter-step">
+            まっさらなチャットで始める →
+          </Button>
+        </div>
+      ) : completed ? (
         <div className="flex flex-col gap-3" data-testid="lesson-completed">
           <p className="text-primary">
-            本回のレッスンは完了しました。よく歩きました。
+            本回のレッスンは完了しました。よく歩きました。上の記録は全ステップの対話です。
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/review" className={buttonVariants()}>
@@ -277,16 +336,18 @@ export function LessonChat({
             )}
           </div>
         </div>
-      ) : !started ? (
-        <Button
-          onClick={() => void exchange({ start: true })}
-          disabled={busy}
-          data-testid="start-lesson"
-        >
-          レッスンを開始
-        </Button>
       ) : (
         <div className="flex flex-col gap-2">
+          {!started && (
+            <Button
+              onClick={() => void exchange({ start: true })}
+              disabled={busy}
+              data-testid="start-lesson"
+              className="self-start"
+            >
+              {isFirstStep ? "レッスンを開始" : "チューターに口火を切ってもらう"}
+            </Button>
+          )}
           <form
             className="flex items-end gap-2"
             onSubmit={(e) => {
@@ -310,7 +371,7 @@ export function LessonChat({
               送信
             </Button>
           </form>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Button
               type="button"
               variant="outline"
@@ -321,8 +382,19 @@ export function LessonChat({
             >
               次のステップへ →
             </Button>
+            {started && (
+              <button
+                type="button"
+                onClick={() => void resetStep()}
+                disabled={busy}
+                className="text-xs text-muted-foreground transition-colors hover:text-destructive"
+                data-testid="reset-step"
+              >
+                このステップを最初からやり直す
+              </button>
+            )}
             <span className="text-xs text-muted-foreground">
-              対話が長いと感じたら、自分のペースで進めてかまいません。
+              自分のペースで進めてかまいません。
             </span>
           </div>
         </div>

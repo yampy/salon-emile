@@ -80,6 +80,39 @@ describe("POST /api/lessons/[n]/chat", () => {
     expect(state.run?.step).toBe("definition_reperes");
   });
 
+  it("starts the advanced step with a clean chat", async () => {
+    const state = await getState("0");
+    expect(state.run?.step).toBe("definition_reperes");
+    // per-step chat: the new step carries none of the intuition dialogue
+    expect(state.run?.messages).toHaveLength(0);
+  });
+
+  it("resets the current step's dialogue and its productions", async () => {
+    const { getActiveRun, recordMessage } = await import("@/server/lesson");
+    const run = getActiveRun(temp.db, 0)!;
+    // a substantive production recorded directly (no tutor advance)
+    recordMessage(temp.db, run.id, "user", run.step, SUBSTANTIVE_ANSWER);
+    expect((await getState("0")).run?.messages).toHaveLength(1);
+
+    const { DELETE: chatDelete } = await import("@/app/api/lessons/[n]/chat/route");
+    const res = await chatDelete(
+      new Request("http://test/api/lessons/0/chat", { method: "DELETE" }),
+      paramsContext({ n: "0" })
+    );
+    expect(res.status).toBe(200);
+    expect((await getState("0")).run?.messages).toHaveLength(0);
+
+    // the advance gate starts over: the wiped production no longer counts
+    const { POST: advancePost } = await import(
+      "@/app/api/lessons/[n]/advance/route"
+    );
+    const blocked = await advancePost(
+      new Request("http://test/api/lessons/0/advance", { method: "POST" }),
+      paramsContext({ n: "0" })
+    );
+    expect(blocked.status).toBe(409);
+  });
+
   it("completes the lesson at the terminal step", async () => {
     // definition_reperes -> theses -> question -> essay -> bridge -> completed
     for (let i = 0; i < 5; i++) {

@@ -1,10 +1,11 @@
 /**
- * POST /api/lessons/[n]/chat — one tutor exchange.
+ * /api/lessons/[n]/chat — the lesson dialogue.
  *
- * Streams the tutor's reply as plain text. After the stream completes the
- * assistant message is persisted, usage recorded, and — if the tutor
- * requested `advance_step` — the server judges the transition (the client
- * refetches lesson state afterwards).
+ * POST streams one tutor exchange. The chat is per-step: only the current
+ * step's messages are shown and sent as history (earlier steps' substantive
+ * productions ride along in the system context), so every step starts
+ * clean. DELETE resets the current step's dialogue entirely — including its
+ * productions, so the advance gate starts over too.
  */
 import { z } from "zod";
 import { getDb } from "@/db/client";
@@ -14,8 +15,11 @@ import { buildTutorSystem } from "@/llm/prompts/tutor";
 import type { ChatMessage } from "@/llm/types";
 import { getSessionPlan } from "@/server/canon";
 import {
+  deleteStepMessages,
+  getActiveRun,
   getOrCreateActiveRun,
-  listRunMessages,
+  listPriorProductions,
+  listStepMessages,
   recordMessage,
   tryAdvance,
 } from "@/server/lesson";
@@ -30,9 +34,9 @@ const BodySchema = z
     message: "either message or start is required",
   });
 
-/** Unpersisted opener used when the learner starts a lesson. */
+/** Unpersisted opener used when the learner starts a step's dialogue. */
 const START_PROMPT =
-  "(システム: 学習者がレッスンを開始しました。導入の問いから対話を始めてください。)";
+  "(システム: 学習者がこのステップの対話を開始しました。ステップの狙いに沿って対話を始めてください。)";
 
 export async function POST(
   request: Request,
@@ -60,10 +64,10 @@ export async function POST(
     recordMessage(db, run.id, "user", run.step, message);
   }
 
-  const history: ChatMessage[] = listRunMessages(db, run.id).map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
+  // Per-step clean chat: only the current step's dialogue is history.
+  const history: ChatMessage[] = listStepMessages(db, run.id, run.step).map(
+    (m) => ({ role: m.role, content: m.content })
+  );
   if (history.length === 0 && start) {
     history.push({ role: "user", content: START_PROMPT });
   }
@@ -76,6 +80,7 @@ export async function POST(
       theses: plan.theses,
       reperes: plan.reperes,
       step: run.step,
+      priorProductions: listPriorProductions(db, run.id, run.step),
     }),
     messages: history,
     // An opener alone can never advance the lesson.
@@ -108,4 +113,19 @@ export async function POST(
       "Cache-Control": "no-store",
     },
   });
+}
+
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ n: string }> }
+): Promise<Response> {
+  const { n: rawN } = await context.params;
+  const sessionN = Number(rawN);
+  const db = getDb();
+  const run = Number.isInteger(sessionN) ? getActiveRun(db, sessionN) : null;
+  if (!run) {
+    return Response.json({ error: "no active lesson run" }, { status: 404 });
+  }
+  const deleted = deleteStepMessages(db, run.id, run.step);
+  return Response.json({ deleted, step: run.step });
 }

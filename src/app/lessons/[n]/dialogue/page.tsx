@@ -9,7 +9,11 @@ import { LessonChat, type ChatDisplayMessage } from "@/components/lesson-chat";
 import { getDb } from "@/db/client";
 import type { LessonStep } from "@/domain/lesson";
 import { getSessionPlan } from "@/server/canon";
-import { getLatestRun, listRunMessages } from "@/server/lesson";
+import {
+  getLatestRun,
+  listRunMessages,
+  listStepMessages,
+} from "@/server/lesson";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +31,12 @@ export default async function DialoguePage({
   }
 
   const run = getLatestRun(db, sessionN);
+  // Active: the current step's clean chat; completed: the full transcript.
   const messages: ChatDisplayMessage[] = run
-    ? listRunMessages(db, run.id).map((m) => ({
-        role: m.role,
-        content: m.content,
-      }))
+    ? (run.status === "active"
+        ? listStepMessages(db, run.id, run.step)
+        : listRunMessages(db, run.id)
+      ).map((m) => ({ role: m.role, content: m.content }))
     : [];
   const hasNext = getSessionPlan(db, sessionN + 1) !== null;
 

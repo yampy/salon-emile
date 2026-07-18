@@ -39,18 +39,31 @@ export type TutorPromptInput = {
   theses: ThesisRef[];
   reperes: RepereRef[];
   step: LessonStep;
+  /**
+   * The learner's last substantive production of each earlier step. The
+   * visible chat is per-step (clean on advance); this keeps continuity.
+   */
+  priorProductions?: { step: LessonStep; text: string }[];
 };
 
 /** Assemble the tutor system blocks (stable parts flagged for caching). */
 export function buildTutorSystem(input: TutorPromptInput): SystemBlock[] {
+  const volatile = [
+    `現在のステップ: ${input.step}`,
+    `このステップの狙い: ${STEP_GUIDANCE[input.step]}`,
+  ];
+  if (input.priorProductions && input.priorProductions.length > 0) {
+    volatile.push(
+      "ここまでのステップでの学習者の産出(この対話には表示されていない。必要に応じて拾って接続する):",
+      ...input.priorProductions.map((p) => `- [${p.step}] ${p.text}`)
+    );
+  }
   return [
     { text: TUTOR_CONSTITUTION, cache: true },
     {
       text: renderSessionPlan(input.session, input.theses, input.reperes),
       cache: true,
     },
-    {
-      text: `現在のステップ: ${input.step}\nこのステップの狙い: ${STEP_GUIDANCE[input.step]}`,
-    },
+    { text: volatile.join("\n") },
   ];
 }

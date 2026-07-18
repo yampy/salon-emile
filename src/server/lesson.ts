@@ -11,6 +11,7 @@ import {
   advanceStep,
   INITIAL_STEP,
   isSubstantiveProduction,
+  LESSON_STEPS,
   type LessonStep,
 } from "@/domain/lesson";
 
@@ -81,6 +82,61 @@ export function listRunMessages(db: Db, runId: number): LessonMessage[] {
     .where(eq(messages.lessonRunId, runId))
     .orderBy(asc(messages.id))
     .all();
+}
+
+/** Dialogue of one step only — each step starts with a clean chat. */
+export function listStepMessages(
+  db: Db,
+  runId: number,
+  step: LessonStep
+): LessonMessage[] {
+  return db
+    .select()
+    .from(messages)
+    .where(and(eq(messages.lessonRunId, runId), eq(messages.step, step)))
+    .orderBy(asc(messages.id))
+    .all();
+}
+
+/** Reset one step's dialogue (the「このステップを最初から」button). */
+export function deleteStepMessages(
+  db: Db,
+  runId: number,
+  step: LessonStep
+): number {
+  return db
+    .delete(messages)
+    .where(and(eq(messages.lessonRunId, runId), eq(messages.step, step)))
+    .run().changes;
+}
+
+export type PriorProduction = { step: LessonStep; text: string };
+
+/**
+ * The learner's last substantive production of each *earlier* step —
+ * injected into the tutor's system context so pedagogical continuity
+ * survives the per-step clean chat.
+ */
+export function listPriorProductions(
+  db: Db,
+  runId: number,
+  currentStep: LessonStep
+): PriorProduction[] {
+  const currentIndex = LESSON_STEPS.indexOf(currentStep);
+  const all = listRunMessages(db, runId);
+  const result: PriorProduction[] = [];
+  for (const step of LESSON_STEPS.slice(0, Math.max(0, currentIndex))) {
+    const last = [...all]
+      .reverse()
+      .find(
+        (m) =>
+          m.step === step && m.role === "user" && isSubstantiveProduction(m.content)
+      );
+    if (last) {
+      result.push({ step, text: last.content });
+    }
+  }
+  return result;
 }
 
 /** Persist one dialogue message at the run's given step. */

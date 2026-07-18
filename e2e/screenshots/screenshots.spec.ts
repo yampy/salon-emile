@@ -22,18 +22,13 @@ async function capture(page: Page, name: string) {
 test("五画面のスクリーンショットを生成する", async ({ page }) => {
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  // --- lesson: open session 0 and exchange a few turns
+  // --- lesson: open session 0, one exchange, capture with the step banner
   await page.goto("/lessons/0/dialogue");
   await page.getByTestId("start-lesson").click();
   await expect(page.locator('[data-role="assistant"]').first()).not.toBeEmpty();
-  for (const step of ["definition_reperes", "theses"]) {
-    await page.getByTestId("chat-input").fill(SUBSTANTIVE);
-    await page.getByTestId("chat-send").click();
-    await expect(page.getByTestId("step-indicator")).toHaveAttribute(
-      "data-current-step",
-      step
-    );
-  }
+  await page.getByTestId("chat-input").fill(SUBSTANTIVE);
+  await page.getByTestId("chat-send").click();
+  await expect(page.getByTestId("step-transition")).toBeVisible();
   await capture(page, "lesson.png");
 
   // --- textbook: the reading page for session 1

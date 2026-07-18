@@ -1,10 +1,16 @@
 /**
- * GET /api/lessons/[n] — current lesson state (run step/status + dialogue),
- * consumed by the lesson client after each streamed exchange.
+ * GET /api/lessons/[n] — current lesson state, consumed by the lesson
+ * client after each exchange. Active runs return only the current step's
+ * dialogue (each step starts clean); completed runs return the full
+ * transcript.
  */
 import { getDb } from "@/db/client";
 import { getSessionPlan } from "@/server/canon";
-import { getLatestRun, listRunMessages } from "@/server/lesson";
+import {
+  getLatestRun,
+  listRunMessages,
+  listStepMessages,
+} from "@/server/lesson";
 
 export async function GET(
   _request: Request,
@@ -19,6 +25,11 @@ export async function GET(
   }
 
   const run = getLatestRun(db, sessionN);
+  const messages = run
+    ? run.status === "active"
+      ? listStepMessages(db, run.id, run.step)
+      : listRunMessages(db, run.id)
+    : [];
 
   return Response.json({
     session: { n: plan.session.n, title: plan.session.title, fr: plan.session.fr },
@@ -27,7 +38,7 @@ export async function GET(
           id: run.id,
           step: run.step,
           status: run.status,
-          messages: listRunMessages(db, run.id).map((m) => ({
+          messages: messages.map((m) => ({
             role: m.role,
             step: m.step,
             content: m.content,
