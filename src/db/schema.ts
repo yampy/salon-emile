@@ -229,7 +229,16 @@ export type LlmRole =
   | "cardGrader"
   | "variantGenerator"
   | "modelAnswer"
-  | "reading";
+  | "reading"
+  | "advisor";
+
+/** The single global Q&A thread (質問) — one conversation, one user. */
+export const advisorMessages = sqliteTable("advisor_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  role: text("role").$type<"user" | "assistant">().notNull(),
+  content: text("content").notNull(),
+  createdAt: createdAt(),
+});
 
 export const sessionReadings = sqliteTable("session_readings", {
   id: integer("id").primaryKey({ autoIncrement: true }),

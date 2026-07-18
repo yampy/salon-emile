@@ -45,6 +45,9 @@ const TUTOR_REPLIES: Record<LessonStep, string> = {
 const FALLBACK_REPLY =
   "続けましょう。いまの考えを、もう一歩だけ言葉にしてみてください。";
 
+const ADVISOR_REPLY =
+  "よい質問です。それは「知ること」と「感じること」の区別に関わる主題ですね。あなた自身の経験から出発して考えると理解が深まります。\n\n参考になる回: 第0回(問いの立て方そのものを学べます)・第1回(意識と自己認識を扱います。テーゼ [s1-t1] が出発点になります)。";
+
 function parseStep(systemText: string): LessonStep | null {
   const match = systemText.match(/現在のステップ: (\w+)/);
   return match ? (match[1] as LessonStep) : null;
@@ -66,7 +69,12 @@ export class MockLlmClient implements LlmClient {
   async chatStream(params: ChatStreamParams): Promise<ChatStream> {
     const systemText = params.system.map((b) => b.text).join("\n");
     const step = parseStep(systemText);
-    const reply = step ? TUTOR_REPLIES[step] : FALLBACK_REPLY;
+    const isAdvisor = systemText.includes("役割: 案内人(advisor)");
+    const reply = isAdvisor
+      ? ADVISOR_REPLY
+      : step
+        ? TUTOR_REPLIES[step]
+        : FALLBACK_REPLY;
     const lastUser = [...params.messages]
       .reverse()
       .find((m) => m.role === "user");

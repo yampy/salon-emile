@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/", label: "ロードマップ" },
   { href: "/practice", label: "演習" },
   { href: "/review", label: "復習" },
+  { href: "/ask", label: "質問" },
   { href: "/dashboard", label: "ダッシュボード" },
   { href: "/settings", label: "設定" },
 ];
