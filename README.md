@@ -162,9 +162,10 @@ Seven ADRs document the load-bearing decisions —
 [FSRS-only scheduling](./docs/adr/0006-fsrs-review.md), and
 [the negative-education guardrails](./docs/adr/0007-guardrails.md).
 
-The visual language is "paper and ink": warm white, sumi ink, a single ultramarine
-accent, system sans-serif body text (the serif italic survives only in the
-logotype's *Émile*) — and deliberately no confetti.
+The visual language is "paper and ink", inverted into a dark theme: sumi-ink
+ground, warm paper-white text, a single ultramarine accent, system sans-serif
+body text (the serif italic survives only in the logotype's *Émile*) — and
+deliberately no confetti.
 
 ## License
 
